@@ -1,6 +1,10 @@
 import numpy as np
 from PyQt4 import QtGui, QtCore
-import axisItemFix
+try:
+    from . import axisItemFix
+except ImportError:
+    import sys
+    print(sys.path)
 import pyqtgraph as pg
 from .packageSettings import config_options
 from .images.imagePlot import image as ipimage

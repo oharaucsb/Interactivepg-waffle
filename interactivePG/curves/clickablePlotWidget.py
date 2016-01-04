@@ -3,9 +3,13 @@ import pyqtgraph as pg
 import numpy as np
 import sys
 from PyQt4 import QtCore, QtGui
-from clickablePlotSettings_ui import Ui_LineSettingsDialog
-from PlotDataErrorItem import *
+from .clickablePlotSettings_ui import Ui_LineSettingsDialog
+from .PlotDataErrorItem import *
 from ..packageSettings import config_options
+from .fittingHelpers import *
+from scipy.optimize import curve_fit as spcf
+
+
 
 class signalBlocker(object):
     def __init__(self, toBlock):
@@ -21,11 +25,13 @@ class signalBlocker(object):
 
         return wrappedf
 
-
 class ClickablePlotWidget(pg.PlotWidget):
     # emitted when the window is closed
     sigPlotClosed = QtCore.pyqtSignal(object)
     sigMouseMoved = QtCore.pyqtSignal(object)
+    sigFitSettingsChange = QtCore.pyqtSignal(object)
+
+    sigCrosshairsMoved = QtCore.pyqtSignal(object)
 
     def __init__(self, *args, **kwargs):
         super(ClickablePlotWidget, self).__init__(*args, **kwargs)
@@ -41,9 +47,58 @@ class ClickablePlotWidget(pg.PlotWidget):
         self.doubleClickTimer.setInterval(250)
         self.doubleClickTimer.setSingleShot(True)
 
+        self.sigFitSettingsChange.connect(self.updateFitSettings)
+
         self.scene().sigMouseMoved.connect(self.mousemove)
 
         self.doubleClickCurve = None
+
+        p = pg.mkPen(color='r', width=3)
+        self.crosshairs = [pg.InfiniteLine(pen=p), pg.InfiniteLine(angle=0, pen=p)]
+        self.crosshairWindow = QtGui.QMessageBox()
+        self.crosshairWindow.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.crosshairWindow.setModal(False)
+        self.plotItem.addItem(self.crosshairs[0])
+        self.plotItem.addItem(self.crosshairs[1])
+        self.removeCrosshairs()
+
+        self.fitSettings = {"linearRegion": pg.LinearRegionItem(),
+                            "button": None,
+                            "curveToFit": None,
+                            "fitFunc": None,
+                            "p0": None,
+                            "menu": None,
+                            "fitCurve": pg.PlotDataItem(pen=pg.mkPen('k', width=3)),
+                            "pText": pg.TextItem("this is an example text", color=(0, 0, 0))}
+
+        self.plotItem.addItem(self.fitSettings["linearRegion"])
+        self.fitSettings["button"] = QtGui.QToolButton()
+        self.fitSettings["button"].setArrowType(QtCore.Qt.RightArrow)
+        self.fitSettings["button"].clicked.connect(self.popupFitMenu)
+        self.plotItem.vb.scene().addWidget(self.fitSettings["button"])
+
+        self.fitSettings["linearRegion"].sigRegionChanged.connect(self.updateFitButtonPosition)
+        self.fitSettings["linearRegion"].sigRegionChanged.connect(self.attemptFitting)
+        self.plotItem.sigRangeChanged.connect(self.updateFitButtonPosition)
+        self.plotItem.sigRangeChanged.connect(self.updateFitTextPosition)
+
+        self.plotItem.addItem(self.fitSettings["pText"])
+        self.fitSettings["pText"].hide()
+        self.fitSettings["pText"].setFont(QtGui.QFont("", 24))
+        self.fitSettings["pText"].setZValue(1001)
+
+
+        # make it sit on top
+        self.fitSettings["fitCurve"].setZValue(1000)
+        # add it directly to the viewBox, NOT the plotItem, to avoid
+        # adding it to the list of plotItem.curves, etc, since a lot
+        # of my stuff depends heavily on plotItem.curves and I don't want
+        # the fit curve to be seen with it.
+        self.plotItem.vb.addItem(self.fitSettings["fitCurve"])
+        self.fitSettings["fitCurve"].hide()
+
+        self.removeFitRegion()
+
     def updateOpts(self, **opts):
         self.opts.update(opts)
         if self.opts["boundedAxes"]:
@@ -51,7 +106,6 @@ class ClickablePlotWidget(pg.PlotWidget):
 
             self.plotItem.showAxis("right")
         for pos in ["top", "left", "right", "bottom"]:
-            print(pos)
             axis = self.plotItem.getAxis(pos)
             axis.setTickFont(QtGui.QFont("", self.opts["axisFontSize"]))
             axis.setLabel(**{"font-size":"{}pt".format(self.opts["axisLabelFontSize"])})
@@ -67,11 +121,33 @@ class ClickablePlotWidget(pg.PlotWidget):
             # axis.setMinimumHeight(300)
 
     def plot(self, *args, **kwargs):
-        pen = kwargs.get('pen', 'l')
-        if 'width' in kwargs:
-            pen = pg.mkPen(pen)
-            pen.setWidth(kwargs['width'])
-            kwargs['pen'] = pen
+        pen = kwargs.get('pen', None)
+        if kwargs.get('color', None) is None:
+            if isinstance(config_options["standardColors"], int):
+                numCols = config_options["standardColors"]
+                idx = len(self.plotItem.curves) % numCols
+                color = pg.intColor(idx, config_options["standardColors"])
+            else:
+                numCols = len(config_options["standardColors"])
+                idx = len(self.plotItem.curves) % numCols
+                col = config_options["standardColors"][idx]
+                color = pg.mkColor(col)
+        if kwargs.get('style', None) is None:
+            idx = (len(self.plotItem.curves) // config_options["standardColors"]) % config_options["standardLineshapes"] + 1
+            style = idx
+
+        width = kwargs.get('linewidth', config_options["linewidth"])
+        if pen is None:
+            pen = pg.mkPen()
+        pen.setColor(color)
+        pen.setWidth(width)
+        pen.setStyle(style)
+        kwargs['pen'] = pen
+
+        # if 'width' in kwargs:
+        #     pen = pg.mkPen(pen)
+        #     pen.setWidth(kwargs['width'])
+        #     kwargs['pen'] = pen
         p = self.plotItem.plot(*args, **kwargs)
         self.setItemClickable(p)
         return p
@@ -171,10 +247,209 @@ class ClickablePlotWidget(pg.PlotWidget):
             self.doubleClickTimer.start()
 
     def closeEvent(self, *args, **kwargs):
+        self.crosshairWindow.close()
         self.sigPlotClosed.emit(self)
 
     def mousemove(self, *args, **kwargs):
         self.sigMouseMoved.emit(self.plotItem.vb.mapSceneToView(args[0]))
+
+    def freeCrosshairsKeyboardEvent(self, ev):
+        drange = self.plotItem.vb.viewRange()
+        xsp = np.abs(np.diff(drange[0])/100.)[0]
+        ysp = np.abs(np.diff(drange[1])/100.)[0]
+        if ev.key() == QtCore.Qt.Key_Left:
+            ev.accept()
+            self.crosshairs[0].setPos(
+                self.crosshairs[0].value() - xsp
+            )
+            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
+        elif ev.key() == QtCore.Qt.Key_Right:
+            ev.accept()
+            self.crosshairs[0].setPos(
+                self.crosshairs[0].value() + xsp
+            )
+            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
+        elif ev.key() == QtCore.Qt.Key_Up:
+            ev.accept()
+            self.crosshairs[1].setPos(
+                self.crosshairs[1].value() + ysp
+            )
+            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
+        elif ev.key() == QtCore.Qt.Key_Down:
+            ev.accept()
+            self.crosshairs[1].setPos(
+                self.crosshairs[1].value() - ysp
+            )
+            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
+        else:
+            super(ClickablePlotWidget, self).keyPressEvent(ev)
+
+    def updateCrosshairWindow(self):
+        x = self.crosshairs[0].value()
+        y = self.crosshairs[1].value()
+        txt = "x={}, y={}".format(x, y)
+        self.crosshairWindow.setText(txt)
+
+    def addCrosshairs(self):
+        self.keyPressEvent = self.freeCrosshairsKeyboardEvent
+        drange = self.plotItem.vb.viewRange()
+        self.crosshairs[0].setValue(np.mean(drange[0]))
+        self.crosshairs[1].setValue(np.mean(drange[1]))
+        self.sigCrosshairsMoved.connect(self.updateCrosshairWindow)
+
+        # self.addItem(self.crosshairs[0])
+        # self.addItem(self.crosshairs[1])
+        self.crosshairs[0].show()
+        self.crosshairs[1].show()
+
+        self.crosshairWindow.show()
+        self.updateCrosshairWindow()
+
+    def removeCrosshairs(self):
+        self.keyPressEvent = super(ClickablePlotWidget, self).keyPressEvent
+        # self.removeItem(self.crosshairs[0])
+        # self.removeItem(self.crosshairs[1])
+        self.crosshairWindow.hide()
+        self.crosshairs[0].hide()
+        self.crosshairs[1].hide()
+
+    def addFitRegion(self):
+        xrange = self.plotItem.vb.viewRange()[0]
+        d = xrange[1]-xrange[0]
+        self.fitSettings["linearRegion"].setRegion((xrange[0] + d*0.2, xrange[1] - d*0.2))
+        self.updateFitButtonPosition()
+
+        if self.fitSettings["curveToFit"] is None:
+            self.fitSettings["curveToFit"] = self.plotItem.curves[0]
+
+        self.fitSettings["linearRegion"].show()
+        self.fitSettings["button"].show()
+        self.fitSettings["fitCurve"].show()
+        self.fitSettings["pText"].show()
+        self.updateFitTextPosition()
+
+    def updateFitButtonPosition(self):
+        yrange = self.plotItem.vb.viewRange()[1]
+        x = self.fitSettings["linearRegion"].getRegion()[1]
+        p = self.plotItem.vb.mapViewToDevice(QtCore.QPointF(x, yrange[1]))
+
+        self.fitSettings["button"].setGeometry(
+            p.x(), p.y(), self.fitSettings["button"].geometry().width(), self.fitSettings["button"].geometry().height()
+        )
+
+    def updateFitTextPosition(self):
+        if not self.fitSettings["pText"].isVisible(): return
+        vrange = self.plotItem.vb.viewRange()
+
+        x = np.sum(vrange[0])/2.
+        self.fitSettings["pText"].setPos(vrange[0][0]*1.05, vrange[1][1]*0.95)
+
+    def removeFitRegion(self):
+        # self.plotItem.removeItem(self.fitSettings["linearRegion"])
+        self.fitSettings["linearRegion"].hide()
+        self.fitSettings["button"].hide()
+        self.fitSettings["fitCurve"].hide()
+        self.fitSettings["pText"].hide()
+
+    def popupFitMenu(self):
+        menu = self.getFitMenu()
+        # Get the cursor position to poppup
+        # the menu
+        p = QtGui.QCursor.pos()
+        menu.popup(p)
+
+    def getFitMenu(self):
+        menu = QtGui.QMenu()
+        mData = menu.addMenu("Select Data...")
+        mFit = menu.addMenu("Set Function...")
+
+        for c in self.plotItem.curves:
+            name = str(c.name())
+            if name is None:
+                name = str(c)
+            a = mData.addAction(name)
+            a.setCheckable(True)
+            if c is self.fitSettings["curveToFit"]:
+                a.setChecked(True)
+            # Need the c=c to overcome a scoping thing in python
+            # when you loop through lambdas like this
+            a.triggered.connect(lambda x, c=c: self.sigFitSettingsChange.emit(c))
+
+        funcs = list(getFuncs.keys())
+        funcs.append("Other...")
+        for n in funcs:
+            a = mFit.addAction(n)
+            a.setCheckable(True)
+            if n == self.fitSettings["fitFunc"]:
+                a.setChecked(True)
+            a.triggered.connect(lambda x, n=n: self.sigFitSettingsChange.emit(n))
+
+        self.fitSettings["menu"] = menu
+
+        return menu
+
+    def updateFitSettings(self, *args, **kwargs):
+        if isinstance(args[0], pg.PlotDataItem):
+            # Been told to change the data source
+            self.fitSettings["curveToFit"] = args[0]
+            self.fitSettings["p0"] = None
+        elif isinstance(args[0], str):
+            # been told to change the fit function
+            if args[0] == "Other...": return
+            self.fitSettings["fitFunc"] = args[0]
+            self.fitSettings["p0"] = None
+        self.attemptFitting()
+
+    def attemptFitting(self):
+        # get the full data
+        try:
+            x = self.fitSettings["curveToFit"].xData
+            y = self.fitSettings["curveToFit"].yData
+        except AttributeError:
+            # no dataset has been selected, abort
+            return
+        if self.fitSettings["fitFunc"] is None: return
+
+        # now need to slice it by the region of itnerest
+        rg = self.fitSettings["linearRegion"].getRegion()
+        xidx0 = np.where(x>rg[0])[0]
+        xidx1 = np.where(x<rg[1])[0]
+        xidx = list(set(xidx0) & set(xidx1))
+
+        x = x[xidx]
+        y = y[xidx]
+        f = getFuncs[self.fitSettings["fitFunc"]]
+
+        if self.fitSettings["p0"] is None:
+            self.fitSettings["p0"] = f.guessParameters(x, y)
+            print("return from guess:", self.fitSettings["p0"])
+
+        try:
+            p, _ = spcf(f.__call__, x, y, p0 = self.fitSettings["p0"])
+        except Exception as e:
+            print("Error fitting function,",e)
+            return
+        self.fitSettings["p0"] = p
+
+        xfit = np.linspace(x[0], x[-1], 250)
+        y = f(xfit, *self.fitSettings["p0"])
+        self.fitSettings["fitCurve"].setData(xfit, y)
+        st = str(f).format(*p)
+
+        self.fitSettings["pText"].setText(st, color=(0,0,0))
+
+    def addFunctionLine(self):
+        pass
+
+
+
+
+
+
+
+
+
+
 
 class CurveItemSettings(QtGui.QDialog):
     # QListWidgets allows multiple selection of listItems
