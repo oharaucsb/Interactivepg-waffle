@@ -131,10 +131,15 @@ class ClickablePlotWidget(pg.PlotWidget):
                 numCols = len(config_options["standardColors"])
                 idx = len(self.plotItem.curves) % numCols
                 col = config_options["standardColors"][idx]
+
                 color = pg.mkColor(col)
-        if kwargs.get('style', None) is None:
-            idx = (len(self.plotItem.curves) // config_options["standardColors"]) % config_options["standardLineshapes"] + 1
-            style = idx
+            if kwargs.get('style', None) is None:
+                idx = (len(self.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
+                style = idx
+        else:
+            color = pg.mkColor(kwargs['color'])
+            numCols = 1
+            style = 1
 
         width = kwargs.get('linewidth', config_options["linewidth"])
         if pen is None:
@@ -329,6 +334,7 @@ class ClickablePlotWidget(pg.PlotWidget):
         self.updateFitTextPosition()
 
     def updateFitButtonPosition(self):
+        if not self.fitSettings["button"].isVisible(): return
         yrange = self.plotItem.vb.viewRange()[1]
         x = self.fitSettings["linearRegion"].getRegion()[1]
         p = self.plotItem.vb.mapViewToDevice(QtCore.QPointF(x, yrange[1]))
@@ -340,9 +346,11 @@ class ClickablePlotWidget(pg.PlotWidget):
     def updateFitTextPosition(self):
         if not self.fitSettings["pText"].isVisible(): return
         vrange = self.plotItem.vb.viewRange()
+        dx = vrange[0][1] - vrange[0][0]
+        dy = vrange[1][1] - vrange[1][0]
 
         x = np.sum(vrange[0])/2.
-        self.fitSettings["pText"].setPos(vrange[0][0]*1.05, vrange[1][1]*0.95)
+        self.fitSettings["pText"].setPos(vrange[0][0] + dx*0.05, vrange[1][1] - dy*0.05)
 
     def removeFitRegion(self):
         # self.plotItem.removeItem(self.fitSettings["linearRegion"])
@@ -418,6 +426,11 @@ class ClickablePlotWidget(pg.PlotWidget):
 
         x = x[xidx]
         y = y[xidx]
+
+        d = np.column_stack((x, y))
+        d = d[d[:,0].argsort()]
+        x = d[:,0]
+        y = d[:,1]
         f = getFuncs[self.fitSettings["fitFunc"]]
 
         if self.fitSettings["p0"] is None:
@@ -440,6 +453,10 @@ class ClickablePlotWidget(pg.PlotWidget):
 
     def addFunctionLine(self):
         pass
+
+    def addLegend(self, *args, **kwargs):
+        if self.plotItem.legend is None:
+            self.plotItem.addLegend()
 
 
 

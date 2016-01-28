@@ -15,8 +15,15 @@ pg.setConfigOption("background", config_options["background"])
 
 
 
-plotList = []
+plotList = {}
+
 imageList = []
+
+def getKeyFromItem(item, dic):
+    for k, v in dic.items():
+        if v is item:
+            return k
+
 
 qApp = None
 
@@ -37,15 +44,15 @@ def plot(*args, **kwargs):
         qApp = QtGui.QApplication([])
     try:
         if not kwargs.pop("newFigure", False):
-            plt = plotList[-1]
+            plt = plotList["__LAST_FIG"]
         else:
             raise IndexError()
-    except IndexError:
-        # plt = PlotWidget()
-        plt = PlotContainerWindow()
-        plotList.append(plt)
-        plt.sigPlotClosed.connect(plotDestroyed)
-        plt.show()
+    except KeyError:
+        plt = figure()
+    if 'label' in kwargs:
+        kwargs['name'] = kwargs['label']
+    if 'name' in kwargs:
+        legend()
     plt.plot(*args, **kwargs)
     return plt
 
@@ -67,24 +74,25 @@ def loglog(*args, **kwargs):
 def legend(*args, **kwargs):
     global plotList
     try:
-        plt = plotList[-1]
-    except IndexError:
+        plt = plotList["__LAST_FIG"]
+    except KeyError:
         return
     plt.addLegend()
-    for curve in plt.plotItem.curves:
-        plt.plotItem.legend.addItem(curve, curve.name())
-
+    # for curve in plt.plotItem.curves:
+    #     plt.plotItem.legend.addItem(curve, curve.name())
 
 def show():
-    global qApp
+    global qApp, plotList
     if qApp is not None:
         qApp.exec_()
         qApp = None
+        plotList = {}
 
 def plotDestroyed(plotWidget):
     global plotList
     try:
-        plotList.pop(plotList.index(plotWidget))
+        # plotList.pop(plotList.index(plotWidget))
+        del plotList[getKeyFromItem(plotWidget)]
     except IndexError:
         pass
     except Exception:
@@ -94,4 +102,30 @@ def imageDestroyed(*args, **kwargs):
     print("Image destroyed", args, kwargs)
 
 def figure(*args, **kwargs):
-    plot(newFigure=True)
+    global qApp, plotList
+    if qApp is None:
+        qApp = QtGui.QApplication([])
+    try:
+        name = str(args[0])
+    except:
+        num = len(plotList)
+        while str(num) in plotList:
+            num +=1
+        name = str(num)
+    try:
+        plt = plotList[name]
+    except KeyError:
+        plt = PlotContainerWindow()
+        plotList[name] = plt
+        try:
+            int(name)
+            plt.setWindowTitle("Figure {}".format(name))
+        except ValueError:
+            plt.setWindowTitle(name)
+        plt.sigPlotClosed.connect(plotDestroyed)
+        plt.show()
+    plotList["__LAST_FIG"] = plt
+
+
+
+    return plt

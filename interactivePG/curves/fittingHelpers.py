@@ -105,13 +105,27 @@ class cosine(FuncHelper):
 
 class exp(FuncHelper):
     def __call__(self, x, *p):
-        A, mu, l, offset = p
-        return A * np.exp(l*(x-mu)) + offset
+        A, l, offset = p
+        return A * np.exp(l*x) + offset
     def __repr__(self):
-        return "A={:.5g}, mu={:.5g},\n  lamb={:.5g}, y0={:.5g}"
+        return "A={:.5g},\n  lamb={:.5g}, y0={:.5g}"
     def guessParameters(self, x, y):
         super(exp, self).guessParameters(x, y)
-        return [1, 1, 1, 1]
+        y = y.copy()
+        x = x.copy()
+
+        offset = np.min(y)
+        y -= offset
+        x1 = x[0]
+        x2 = x[-1]
+        y1 = y[0]
+        y2 = y[-1]
+
+        l = np.log(y1/y2)/(x1-x2) * np.sign(y1-y2)
+        A = np.exp(np.log(y2)-l*x2) * np.sign(y1-y2)
+
+
+        return [A, l, offset]
 
 class gauss(FuncHelper):
     def __call__(self, x, *p):
