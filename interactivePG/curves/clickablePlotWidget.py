@@ -7,6 +7,7 @@ from .clickablePlotSettings_ui import Ui_LineSettingsDialog
 from .PlotDataErrorItem import *
 from ..packageSettings import config_options
 from .fittingHelpers import *
+from ..helperFuncs import *
 from scipy.optimize import curve_fit as spcf
 
 
@@ -121,30 +122,46 @@ class ClickablePlotWidget(pg.PlotWidget):
             # axis.setMinimumHeight(300)
 
     def plot(self, *args, **kwargs):
-        pen = kwargs.get('pen', None)
-        if kwargs.get('color', None) is None:
+        pen = kwargs.get('pen', pg.mkPen())
+
+        newArgs, newKwargs = plotArgsParser(*args)
+        kwargs.update(newKwargs)
+        args = newArgs
+
+        if isinstance(config_options["standardColors"], int):
+            numCols = config_options["standardColors"]
+        else:
+            numCols = len(config_options["standardColors"])
+
+        color = kwargs.get("color", None)
+        if color is None:
             if isinstance(config_options["standardColors"], int):
-                numCols = config_options["standardColors"]
                 idx = len(self.plotItem.curves) % numCols
                 color = pg.intColor(idx, config_options["standardColors"])
             else:
-                numCols = len(config_options["standardColors"])
                 idx = len(self.plotItem.curves) % numCols
-                col = config_options["standardColors"][idx]
+                color = config_options["standardColors"][idx]
 
-                color = pg.mkColor(col)
-            if kwargs.get('style', None) is None:
-                idx = (len(self.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
-                style = idx
+        style = kwargs.get('style', None)
+        if style is None:
+            idx = (len(self.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
+            style = idx
         else:
-            color = pg.mkColor(kwargs['color'])
-            numCols = 1
-            style = 1
+            # pass int and use the qt pen value for it
+            # otherwise, parse it.
+            if not isinstance(style, int):
+                style = config_options["linestyleChars"].index(style)
+                print("style:", style)
+
+        if 'symbol' in kwargs and 'symbolPen' not in kwargs:
+            kwargs['symbolPen'] = pg.mkPen(color=color)
+        if 'symbol' in kwargs and 'symbolBrush' not in kwargs:
+            kwargs['symbolBrush'] = pg.mkBrush(color=color)
+
 
         width = kwargs.get('linewidth', config_options["linewidth"])
-        if pen is None:
-            pen = pg.mkPen()
-        pen.setColor(color)
+
+        pen.setColor(pg.mkColor(color))
         pen.setWidth(width)
         pen.setStyle(style)
         kwargs['pen'] = pen
