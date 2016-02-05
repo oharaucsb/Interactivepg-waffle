@@ -20,5 +20,6 @@ config_options = {
                         # should be cycled when no args are passed
     "linestyleChars": ['_', '-', '--', '.', '-.', '-..'], # characeter codes used for passing
                     #string to specify line style
-    "linewidth": 3
+    "linewidth": 3,
+    "errorBarCapWidth": 0.0
 }

@@ -56,6 +56,24 @@ def plot(*args, **kwargs):
     plt.plot(*args, **kwargs)
     return plt
 
+def errorbar(*args, **kwargs):
+    global qApp, plotList
+    if qApp is None:
+        qApp = QtGui.QApplication([])
+    try:
+        if not kwargs.pop("newFigure", False):
+            plt = plotList["__LAST_FIG"]
+        else:
+            raise IndexError()
+    except KeyError:
+        plt = figure()
+    if 'label' in kwargs:
+        kwargs['name'] = kwargs['label']
+    if 'name' in kwargs:
+        legend()
+    plt.errorbars(*args, **kwargs)
+    return plt
+
 def semilogy(*args, **kwargs):
     p = plot(*args, **kwargs)
     p.setLogMode(x=False, y=True)

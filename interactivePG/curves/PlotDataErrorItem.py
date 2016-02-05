@@ -19,7 +19,7 @@ class PlotDataErrorItem(pg.PlotDataItem):
     be a huge headache to work around if you don't subclass.
     """
     def __init__(self, *args, **kwargs):
-        self.errorbars = pg.ErrorBarItem()
+        self.errorbars = pg.ErrorBarItem(**kwargs)
         super(PlotDataErrorItem, self).__init__(*args, **kwargs)
         self.errorbars.setParentItem(self)
 
