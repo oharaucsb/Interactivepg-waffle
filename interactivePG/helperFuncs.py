@@ -61,7 +61,7 @@ def getPlotPens(pw, *args, **kwargs):
                 idx = len(pw.plotItem.curves) % numCols
                 color = config_options["standardColors"][idx]
 
-        style = kwargs.get('style', None)
+        style = kwargs.pop('style', None)
         if style is None:
             idx = (len(pw.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
             style = idx
@@ -70,7 +70,6 @@ def getPlotPens(pw, *args, **kwargs):
             # otherwise, parse it.
             if not isinstance(style, int):
                 style = config_options["linestyleChars"].index(style)
-                print("style:", style)
 
         if 'symbol' in kwargs and 'symbolPen' not in kwargs:
             kwargs['symbolPen'] = pg.mkPen(color=color)
@@ -84,7 +83,7 @@ def getPlotPens(pw, *args, **kwargs):
         pen.setWidth(width)
         pen.setStyle(style)
         kwargs['pen'] = pen
-    return kwargs
+    return args, kwargs
 
 
 
