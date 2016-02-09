@@ -294,6 +294,7 @@ class ClickablePlotWidget(pg.PlotWidget):
 
     def removeCrosshairs(self):
         self.keyPressEvent = super(ClickablePlotWidget, self).keyPressEvent
+        # self.sigCrosshairsMoved.disconnect(self.updateCrosshairWindow)
         # self.removeItem(self.crosshairs[0])
         # self.removeItem(self.crosshairs[1])
         self.crosshairWindow.hide()
@@ -439,6 +440,32 @@ class ClickablePlotWidget(pg.PlotWidget):
     def addLegend(self, *args, **kwargs):
         if self.plotItem.legend is None:
             self.plotItem.addLegend()
+
+    def mousePressEvent(self, ev):
+        # Intercept if the crosshairs
+        # are visible so we can move their position
+        if self.crosshairs[0].isVisible():
+            ev.accept()
+            p = self.plotItem.vb.mapSceneToView(ev.pos())
+
+            self.crosshairs[0].setPos(p.x())
+            self.crosshairs[1].setPos(p.y())
+            self.updateCrosshairWindow()
+        else:
+            super(ClickablePlotWidget, self).mousePressEvent(ev)
+
+    def mouseMoveEvent(self, ev):
+        # If the crosshairs are visible,
+        # we need to handle this, otherwise
+        # pyqtgraph throws a fit
+        if self.crosshairs[0].isVisible():
+            ev.accept()
+            self.mousemove(ev.pos())
+        else:
+            super(ClickablePlotWidget, self).mouseMoveEvent(ev)
+
+    def mouseReleaseEvent(self, ev):
+        ev.accept()
 
 
 
