@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'clickablePlotSettings.ui'
+# Form implementation generated from reading ui file 'C:\Users\dvalovcin\Documents\GitHub\Interactivepg-waffle\interactivePG\curves\clickablePlotSettings.ui'
 #
-# Created: Fri Nov  6 08:21:19 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created by: PyQt4 UI code generator 4.11.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -27,17 +26,15 @@ class Ui_LineSettingsDialog(object):
     def setupUi(self, LineSettingsDialog):
         LineSettingsDialog.setObjectName(_fromUtf8("LineSettingsDialog"))
         LineSettingsDialog.resize(561, 466)
-        self.buttonBox = QtGui.QDialogButtonBox(LineSettingsDialog)
-        self.buttonBox.setGeometry(QtCore.QRect(60, 380, 341, 32))
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.lwCurves = QtGui.QListWidget(LineSettingsDialog)
-        self.lwCurves.setGeometry(QtCore.QRect(20, 10, 131, 201))
+        self.verticalLayout_2 = QtGui.QVBoxLayout(LineSettingsDialog)
+        self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.splitter = QtGui.QSplitter(LineSettingsDialog)
+        self.splitter.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter.setObjectName(_fromUtf8("splitter"))
+        self.lwCurves = QtGui.QListWidget(self.splitter)
         self.lwCurves.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.lwCurves.setObjectName(_fromUtf8("lwCurves"))
-        self.twCurveSettings = QtGui.QTabWidget(LineSettingsDialog)
-        self.twCurveSettings.setGeometry(QtCore.QRect(180, 20, 415, 246))
+        self.twCurveSettings = QtGui.QTabWidget(self.splitter)
         self.twCurveSettings.setObjectName(_fromUtf8("twCurveSettings"))
         self.tab = QtGui.QWidget()
         self.tab.setObjectName(_fromUtf8("tab"))
@@ -73,8 +70,12 @@ class Ui_LineSettingsDialog(object):
         self.horizontalLayout_2.addWidget(self.cbLineStyle)
         self.horizontalLayout_3.addWidget(self.groupBox_3)
         self.colLine = ColorButton(self.groupBox_4)
+        self.colLine.setText(_fromUtf8(""))
         self.colLine.setObjectName(_fromUtf8("colLine"))
         self.horizontalLayout_3.addWidget(self.colLine)
+        self.horizontalLayout_3.setStretch(0, 1)
+        self.horizontalLayout_3.setStretch(1, 1)
+        self.horizontalLayout_3.setStretch(2, 1)
         self.verticalLayout.addWidget(self.groupBox_4)
         self.groupBox_5 = QtGui.QGroupBox(self.tab)
         self.groupBox_5.setFlat(True)
@@ -107,9 +108,15 @@ class Ui_LineSettingsDialog(object):
         self.horizontalLayout_6.addWidget(self.cbMarkerStyle)
         self.horizontalLayout_4.addWidget(self.groupBox_6)
         self.colMarker = ColorButton(self.groupBox_5)
+        self.colMarker.setText(_fromUtf8(""))
         self.colMarker.setObjectName(_fromUtf8("colMarker"))
         self.horizontalLayout_4.addWidget(self.colMarker)
+        self.horizontalLayout_4.setStretch(0, 1)
+        self.horizontalLayout_4.setStretch(1, 1)
+        self.horizontalLayout_4.setStretch(2, 1)
         self.verticalLayout.addWidget(self.groupBox_5)
+        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem)
         self.twCurveSettings.addTab(self.tab, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName(_fromUtf8("tab_2"))
@@ -120,6 +127,12 @@ class Ui_LineSettingsDialog(object):
         self.tYOffset.setGeometry(QtCore.QRect(192, 100, 81, 21))
         self.tYOffset.setObjectName(_fromUtf8("tYOffset"))
         self.twCurveSettings.addTab(self.tab_2, _fromUtf8(""))
+        self.verticalLayout_2.addWidget(self.splitter)
+        self.buttonBox = QtGui.QDialogButtonBox(LineSettingsDialog)
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
+        self.verticalLayout_2.addWidget(self.buttonBox)
 
         self.retranslateUi(LineSettingsDialog)
         self.twCurveSettings.setCurrentIndex(0)
@@ -138,7 +151,6 @@ class Ui_LineSettingsDialog(object):
         self.cbLineStyle.setItemText(3, _translate("LineSettingsDialog", "Dotted", None))
         self.cbLineStyle.setItemText(4, _translate("LineSettingsDialog", "Dash Dot", None))
         self.cbLineStyle.setItemText(5, _translate("LineSettingsDialog", "Dash Dot Dot", None))
-        self.colLine.setText(_translate("LineSettingsDialog", "PushButton", None))
         self.groupBox_5.setTitle(_translate("LineSettingsDialog", "Marker", None))
         self.groupBox_2.setTitle(_translate("LineSettingsDialog", "Size", None))
         self.groupBox_6.setTitle(_translate("LineSettingsDialog", "Style", None))
@@ -149,8 +161,7 @@ class Ui_LineSettingsDialog(object):
         self.cbMarkerStyle.setItemText(4, _translate("LineSettingsDialog", "d", None))
         self.cbMarkerStyle.setItemText(5, _translate("LineSettingsDialog", "+", None))
         self.cbMarkerStyle.setItemText(6, _translate("LineSettingsDialog", "x", None))
-        self.colMarker.setText(_translate("LineSettingsDialog", "PushButton", None))
         self.twCurveSettings.setTabText(self.twCurveSettings.indexOf(self.tab), _translate("LineSettingsDialog", "Line Style", None))
         self.twCurveSettings.setTabText(self.twCurveSettings.indexOf(self.tab_2), _translate("LineSettingsDialog", "Offset", None))
 
-from pyqtgraph import SpinBox, ColorButton
+from pyqtgraph import ColorButton, SpinBox

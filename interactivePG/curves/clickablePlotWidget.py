@@ -30,7 +30,14 @@ class ClickablePlotWidget(pg.PlotWidget):
     # emitted when the window is closed
     sigPlotClosed = QtCore.pyqtSignal(object)
     sigMouseMoved = QtCore.pyqtSignal(object)
+
+    # Emitted when an arrow key is pressed. Emits a
+    # 2x1 np.array, first index is left/right (-1/+1) and
+    # second is down/up (-1/+1, resp)
+    sigArrowKeyPressed = QtCore.pyqtSignal(object)
+
     sigFitSettingsChange = QtCore.pyqtSignal(object)
+
 
     sigCrosshairsMoved = QtCore.pyqtSignal(object)
 
@@ -42,6 +49,21 @@ class ClickablePlotWidget(pg.PlotWidget):
 
         self.selectedCurves = {}
 
+        self.fitSettings = {"linearRegion": pg.LinearRegionItem(),
+                            "button": None,
+                            "curveToFit": None,
+                            "fitFunc": None,
+                            "p0": None,
+                            "menu": None,
+                            "fitCurve": pg.PlotDataItem(pen=pg.mkPen('k', width=3)),
+                            "pText": pg.TextItem("this is an example text", color=(0, 0, 0))}
+
+        self.crosshairSettings = {"crosshairsVisible": False,
+                                  "freeCrosshairs": False,
+                                  "dataCrosshairs": False,
+                                  "dataCrosshairsIdx": 0,
+                                  "dataCrosshairsSource": 0}
+
         # set up a timer to tell when you've double
         # clicked a
         self.doubleClickTimer = QtCore.QTimer()
@@ -51,26 +73,23 @@ class ClickablePlotWidget(pg.PlotWidget):
         self.sigFitSettingsChange.connect(self.updateFitSettings)
 
         self.scene().sigMouseMoved.connect(self.mousemove)
+        self.scene().sigMouseClicked.connect(self.mouseClickedEvent)
+        self.sigArrowKeyPressed.connect(self.updateFreeCrosshairs)
+        self.sigArrowKeyPressed.connect(self.updateDataCrosshairs)
 
         self.doubleClickCurve = None
 
         p = pg.mkPen(color='r', width=3)
         self.crosshairs = [pg.InfiniteLine(pen=p), pg.InfiniteLine(angle=0, pen=p)]
-        self.crosshairWindow = QtGui.QMessageBox()
+        self.crosshairWindow = QtGui.QMessageBox(self)
         self.crosshairWindow.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.crosshairWindow.setWindowFlags(QtCore.Qt.Tool)
         self.crosshairWindow.setModal(False)
         self.plotItem.addItem(self.crosshairs[0])
         self.plotItem.addItem(self.crosshairs[1])
-        self.removeCrosshairs()
-
-        self.fitSettings = {"linearRegion": pg.LinearRegionItem(),
-                            "button": None,
-                            "curveToFit": None,
-                            "fitFunc": None,
-                            "p0": None,
-                            "menu": None,
-                            "fitCurve": pg.PlotDataItem(pen=pg.mkPen('k', width=3)),
-                            "pText": pg.TextItem("this is an example text", color=(0, 0, 0))}
+        self.sigCrosshairsMoved.connect(self.updateCrosshairWindow)
+        # Hide these things
+        self.removeFreeCrosshairs()
 
         self.plotItem.addItem(self.fitSettings["linearRegion"])
         self.fitSettings["button"] = QtGui.QToolButton()
@@ -144,6 +163,11 @@ class ClickablePlotWidget(pg.PlotWidget):
         kwargs:
         capWidth: widths of bar caps
         """
+
+        aargs, kkwargs = getPlotPens(self, *args, **kwargs)
+        kwargs.update(kkwargs)
+        args = aargs
+
 
         if len(args)==2:
             kwargs.update(y=args[0])
@@ -240,49 +264,79 @@ class ClickablePlotWidget(pg.PlotWidget):
     def mousemove(self, *args, **kwargs):
         self.sigMouseMoved.emit(self.plotItem.vb.mapSceneToView(args[0]))
 
-    def freeCrosshairsKeyboardEvent(self, ev):
+    def keyPressEvent(self, ev):
+        arr = [0, 0]
+        if ev.key() == QtCore.Qt.Key_Left:
+            arr[0] = -1
+        elif ev.key() == QtCore.Qt.Key_Right:
+            arr[0] = 1
+        elif ev.key() == QtCore.Qt.Key_Up:
+            arr[1] = 1
+        elif ev.key() == QtCore.Qt.Key_Down:
+            arr[1] = -1
+        self.sigArrowKeyPressed.emit(np.array(arr))
+
+        super(ClickablePlotWidget, self).keyPressEvent(ev)
+
+    def updateFreeCrosshairs(self, newPos):
+        if not self.crosshairSettings["freeCrosshairs"]:
+            return
         drange = self.plotItem.vb.viewRange()
         xsp = np.abs(np.diff(drange[0])/100.)[0]
         ysp = np.abs(np.diff(drange[1])/100.)[0]
-        if ev.key() == QtCore.Qt.Key_Left:
-            ev.accept()
-            self.crosshairs[0].setPos(
-                self.crosshairs[0].value() - xsp
+
+        change = np.array(newPos) * np.array([xsp, ysp])
+
+        for i in [0, 1]:
+            self.crosshairs[i].setPos(
+                self.crosshairs[i].value() + change[i]
             )
-            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
-        elif ev.key() == QtCore.Qt.Key_Right:
-            ev.accept()
-            self.crosshairs[0].setPos(
-                self.crosshairs[0].value() + xsp
-            )
-            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
-        elif ev.key() == QtCore.Qt.Key_Up:
-            ev.accept()
-            self.crosshairs[1].setPos(
-                self.crosshairs[1].value() + ysp
-            )
-            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
-        elif ev.key() == QtCore.Qt.Key_Down:
-            ev.accept()
-            self.crosshairs[1].setPos(
-                self.crosshairs[1].value() - ysp
-            )
-            self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
-        else:
-            super(ClickablePlotWidget, self).keyPressEvent(ev)
+        self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
+
+    def updateDataCrosshairs(self, direction=np.array([0,0])):
+        if not self.crosshairSettings["dataCrosshairs"]:
+            return
+
+        self.crosshairSettings["dataCrosshairsSource"] += direction[1]
+        self.crosshairSettings["dataCrosshairsSource"] %= len(self.plotItem.curves)
+
+        dataCurve = self.plotItem.curves[self.crosshairSettings["dataCrosshairsSource"]]
+        xData, yData = dataCurve.getData()
+        if xData is None or yData is None:
+            print("it's nonE?")
+
+        self.crosshairSettings["dataCrosshairsIdx"] += direction[0]
+        self.crosshairSettings["dataCrosshairsIdx"] %= len(xData)
+
+        self.crosshairs[0].setPos(
+            xData[self.crosshairSettings["dataCrosshairsIdx"]]
+        )
+        self.crosshairs[1].setPos(
+            yData[self.crosshairSettings["dataCrosshairsIdx"]]
+        )
+        self.sigCrosshairsMoved.emit([i.value() for i in self.crosshairs])
 
     def updateCrosshairWindow(self):
         x = self.crosshairs[0].value()
         y = self.crosshairs[1].value()
-        txt = "x={}, y={}".format(x, y)
+        if self.crosshairSettings["dataCrosshairs"]:
+            curve = self.plotItem.curves[
+                self.crosshairSettings["dataCrosshairsSource"]]
+            idx =self.crosshairSettings["dataCrosshairsIdx"]
+            xD, yD = curve.getData()
+            name = curve.name()
+            if name is None: name="Data"
+            txt = "{}:\nx[{}]={}, y[{}]={}".format(name, idx, xD[idx], idx, yD[idx])
+        else:
+            txt = "x={}, y={}".format(x, y)
         self.crosshairWindow.setText(txt)
 
-    def addCrosshairs(self):
-        self.keyPressEvent = self.freeCrosshairsKeyboardEvent
+    def addFreeCrosshairs(self):
+        self.crosshairSettings["crosshairsVisible"] = True
+        self.crosshairSettings["freeCrosshairs"] = True
         drange = self.plotItem.vb.viewRange()
         self.crosshairs[0].setValue(np.mean(drange[0]))
         self.crosshairs[1].setValue(np.mean(drange[1]))
-        self.sigCrosshairsMoved.connect(self.updateCrosshairWindow)
 
         # self.addItem(self.crosshairs[0])
         # self.addItem(self.crosshairs[1])
@@ -292,11 +346,28 @@ class ClickablePlotWidget(pg.PlotWidget):
         self.crosshairWindow.show()
         self.updateCrosshairWindow()
 
-    def removeCrosshairs(self):
-        self.keyPressEvent = super(ClickablePlotWidget, self).keyPressEvent
-        # self.sigCrosshairsMoved.disconnect(self.updateCrosshairWindow)
-        # self.removeItem(self.crosshairs[0])
-        # self.removeItem(self.crosshairs[1])
+    def removeFreeCrosshairs(self):
+        self.crosshairSettings["crosshairsVisible"] = False
+        self.crosshairSettings["freeCrosshairs"] = False
+        self.crosshairWindow.hide()
+        self.crosshairs[0].hide()
+        self.crosshairs[1].hide()
+
+    def addDataCrosshairs(self):
+        self.crosshairSettings["crosshairsVisible"] = True
+        self.crosshairSettings["dataCrosshairs"] = True
+
+        self.updateDataCrosshairs()
+
+        self.crosshairs[0].show()
+        self.crosshairs[1].show()
+
+        self.crosshairWindow.show()
+        self.updateCrosshairWindow()
+
+    def removeDataCrosshairs(self):
+        self.crosshairSettings["crosshairsVisible"] = False
+        self.crosshairSettings["dataCrosshairs"] = False
         self.crosshairWindow.hide()
         self.crosshairs[0].hide()
         self.crosshairs[1].hide()
@@ -441,36 +512,29 @@ class ClickablePlotWidget(pg.PlotWidget):
         if self.plotItem.legend is None:
             self.plotItem.addLegend()
 
-    def mousePressEvent(self, ev):
+    def mouseClickedEvent(self, ev):
         # Intercept if the crosshairs
         # are visible so we can move their position
-        if self.crosshairs[0].isVisible():
-            ev.accept()
-            p = self.plotItem.vb.mapSceneToView(ev.pos())
+        if self.crosshairSettings["crosshairsVisible"] and\
+                        ev.button() == QtCore.Qt.LeftButton:
 
-            self.crosshairs[0].setPos(p.x())
-            self.crosshairs[1].setPos(p.y())
+            ev.accept()
+            p = self.plotItem.vb.mapSceneToView(ev.scenePos())
+
+            # if free, set the crosshairs to the clicked position
+            if self.crosshairSettings["freeCrosshairs"]:
+                self.crosshairs[0].setPos(p.x())
+                self.crosshairs[1].setPos(p.y())
+            # otherwise, find the nearest datapoint and go to it.
+            elif self.crosshairSettings["dataCrosshairs"]:
+                xD, yD = self.plotItem.curves[
+                    self.crosshairSettings["dataCrosshairsSource"]].getData()
+                xD = np.nan_to_num(xD)
+                yD = np.nan_to_num(yD)
+                dist = (p.x()-xD)**2 + (p.y()-yD)**2
+                self.crosshairSettings["dataCrosshairsIdx"] = np.argmin(dist)
+                self.updateDataCrosshairs()
             self.updateCrosshairWindow()
-        else:
-            super(ClickablePlotWidget, self).mousePressEvent(ev)
-
-    def mouseMoveEvent(self, ev):
-        # If the crosshairs are visible,
-        # we need to handle this, otherwise
-        # pyqtgraph throws a fit
-        if self.crosshairs[0].isVisible():
-            ev.accept()
-            self.mousemove(ev.pos())
-        else:
-            super(ClickablePlotWidget, self).mouseMoveEvent(ev)
-
-    def mouseReleaseEvent(self, ev):
-        ev.accept()
-
-
-
-
-
 
 
 
@@ -687,8 +751,11 @@ class CurveItemSettings(QtGui.QDialog):
         for listItem in self.ui.lwCurves.selectedItems():
             curve  = self.getCurveFromItem(listItem)
             brush = pg.mkBrush(curve.opts["symbolBrush"])
+            pen = pg.mkPen(curve.opts["symbolPen"])
             brush.setColor(colorButton.color())
+            pen.setColor(colorButton.color())
             curve.setSymbolBrush(brush)
+            curve.setSymbolPen(pen)
 
     @staticmethod
     def getNewParameters(parent, curves, clickedCurve = None):

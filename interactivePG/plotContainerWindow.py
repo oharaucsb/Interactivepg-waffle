@@ -41,6 +41,26 @@ class CrosshairIcon(BaseIcon):
 
         return p
 
+class DataBrowseIcon(BaseIcon):
+    def drawIconPainter(self, p, h, w):
+        """
+        :type p: QtGui.QPainter
+        """
+
+        p.setPen(pg.mkPen('r', width=8))
+
+
+        path = QtGui.QPainterPath()
+        path.moveTo(w/2, h*.2)
+        path.lineTo(w/2, h*.8)
+        path.moveTo(w*.2, h/2)
+        path.lineTo(w*.8, h/2)
+        path.addRect(w*.35, h*.35, w*.3, h*.3)
+
+        p.drawPath(path)
+
+        return p
+
 class FitFunctionIcon(BaseIcon):
     def drawIconPainter(self, p, height, width):
         """
@@ -84,7 +104,7 @@ class AddFunctionIcon(BaseIcon):
         :type p: QtGui.QPainter
         """
         font = p.font()
-        font.setPointSize(80)
+        font.setPointSize(60)
         p.setFont(font)
         rect = QtCore.QRectF(w*0.2, h*0.2, w*0.6, h*0.6)
         p.drawText(rect, QtCore.Qt.AlignCenter, "f(x)")
@@ -109,7 +129,11 @@ class PlotContainerWindow(QtGui.QMainWindow):
         self.plotTools = QtGui.QToolBar()
         self.plotTools.setMovable(False)
 
-        a = self.plotTools.addAction(CrosshairIcon(), 'Data Crosshairs')
+        a = self.plotTools.addAction(DataBrowseIcon(), 'Data Crosshairs')
+        a.setCheckable(True)
+        a.toggled.connect(self.toggleDataCrosshairs)
+
+        a = self.plotTools.addAction(CrosshairIcon(), 'Screen Crosshairs')
         a.setCheckable(True)
         a.toggled.connect(self.togglePlotCrosshairs)
 
@@ -137,14 +161,23 @@ class PlotContainerWindow(QtGui.QMainWindow):
         self.xPosStatus.setText("x={}".format(pos.x()))
         self.yPosStatus.setText("y={}".format(pos.y()))
 
+    def toggleDataCrosshairs(self, enabled):
+        if enabled:
+            for act in self.plotTools.actions():
+                if act is self.sender(): continue
+                act.setChecked(False)
+            self.plotWidget.addDataCrosshairs()
+        if not enabled:
+            self.plotWidget.removeDataCrosshairs()
+
     def togglePlotCrosshairs(self, enabled):
         if enabled:
             for act in self.plotTools.actions():
                 if act is self.sender(): continue
                 act.setChecked(False)
-            self.plotWidget.addCrosshairs()
+            self.plotWidget.addFreeCrosshairs()
         if not enabled:
-            self.plotWidget.removeCrosshairs()
+            self.plotWidget.removeFreeCrosshairs()
 
     def toggleFitRegion(self, enabled):
         if enabled:
@@ -161,6 +194,10 @@ class PlotContainerWindow(QtGui.QMainWindow):
                 # if act is self.sender(): continue
                 act.setChecked(False)
             self.plotWidget.addFunctionLine()
+
+    def maximize(self):
+        self.showMaximized()
+
 
 
 

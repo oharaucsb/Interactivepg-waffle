@@ -4,6 +4,25 @@ import re
 from pyqtgraph.graphicsItems.ScatterPlotItem import Symbols
 from .packageSettings import *
 
+def parsePenFormatString(st):
+    settingDict = {}
+    colPat = 'b|g|r|c|k|m'
+    match = re.search(colPat, st)
+    if match:
+        settingDict["color"] = match.group()
+
+    styPat = '(?:_)|(?:\-\-)|(?:\-\.\.)|(?:\-\.)|(?:\-)|(?:\.)'
+    match = re.search(styPat, st)
+    if match:
+        settingDict["style"] = match.group()
+
+    symPat = 'o|s|t|d|\+|x'
+    match = re.search(symPat, st)
+    if match:
+        settingDict["symbol"] = match.group()
+    return settingDict
+
+
 def plotArgsParser(*args):
     """
     Take the args passed to a pg.plot command
@@ -18,20 +37,22 @@ def plotArgsParser(*args):
     for arg in args:
         if not isinstance(arg, str):
             continue
-        colPat = 'b|g|r|c|k|m'
-        match = re.search(colPat, arg)
-        if match:
-            settingDict["color"] = match.group()
-
-        styPat = '(?:_)|(?:\-\-)|(?:\-\.\.)|(?:\-\.)|(?:\-)|(?:\.)'
-        match = re.search(styPat, arg)
-        if match:
-            settingDict["style"] = match.group()
-
-        symPat = 'o|s|t|d|\+|x'
-        match = re.search(symPat, arg)
-        if match:
-            settingDict["symbol"] = match.group()
+        # colPat = 'b|g|r|c|k|m'
+        # match = re.search(colPat, arg)
+        # if match:
+        #     settingDict["color"] = match.group()
+        #
+        # styPat = '(?:_)|(?:\-\-)|(?:\-\.\.)|(?:\-\.)|(?:\-)|(?:\.)'
+        # match = re.search(styPat, arg)
+        # if match:
+        #     settingDict["style"] = match.group()
+        #
+        # symPat = 'o|s|t|d|\+|x'
+        # match = re.search(symPat, arg)
+        # if match:
+        #     settingDict["symbol"] = match.group()
+        pens = parsePenFormatString(arg)
+        settingDict.update(pens)
         args.remove(arg)
         break
     return tuple(args), settingDict
@@ -43,6 +64,11 @@ def getPlotPens(pw, *args, **kwargs):
     pen = kwargs.get('pen', None)
     if pen is None:
         pen = pg.mkPen()
+
+        if "fmt" in kwargs:
+            kwargs.update(parsePenFormatString(kwargs.pop("fmt")))
+
+
         newArgs, newKwargs = plotArgsParser(*args)
         kwargs.update(newKwargs)
         args = newArgs

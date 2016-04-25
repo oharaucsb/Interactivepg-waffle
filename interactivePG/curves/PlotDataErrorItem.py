@@ -30,11 +30,23 @@ class PlotDataErrorItem(pg.PlotDataItem):
         kwargs.update({'x': self.xData})
         kwargs.update({'y': self.yData})
         kwargs.update({'height': 2*self.errorData})
+
         self.errorbars.setData(**kwargs)
+
+        # I don't want error bars to follow a dashed style.
+        # This isn't a good way to do it, but I'm busy right now.
+        pen = kwargs.pop("pen", None)
+        if pen is not None:
+            self.setPen(pen)
 
     def setPen(self, *args, **kwargs):
         super(PlotDataErrorItem, self).setPen(*args, **kwargs)
-        self.errorbars.setOpts(pen=self.opts['pen'])
+
+        # force solid lines. Is this always wanted?
+        pen = pg.mkPen(self.opts["pen"])
+        pen.setStyle(1)
+        self.errorbars.setOpts(pen=pen)
+        # self.errorbars.setOpts(pen=self.opts['pen'])
 
     def setLogMode(self, xMode, yMode):
         super(PlotDataErrorItem, self).setLogMode(xMode, yMode)

@@ -9,6 +9,7 @@ from PyQt4 import QtCore, QtGui
 # those. I intercept them here to fix those
 
 
+
 oldDrawSpecs = pyqtgraph.AxisItem.generateDrawSpecs
 def newDrawSpecs(self, p):
     if False:
@@ -114,10 +115,22 @@ def newDrawSpecs(self, p):
     self._updateMaxTextSize(textSize2)
     return axisSpec, tickSpecs, newTextSpecs
 
+oldinit = pyqtgraph.AxisItem.__init__
+def __init__(self, *args, **kwargs):
+    oldinit(self, *args, **kwargs)
+    try:
+        self.parent().scene().sigMouseClicked.connect(self.mouseClickEvent)
+    except AttributeError:
+        pass
+
+def mouseClickEvent(self, ev):
+    print "got mouse click"
 
 
 
 pyqtgraph.AxisItem.generateDrawSpecs = newDrawSpecs
+pyqtgraph.AxisItem.__init__ = __init__
+pyqtgraph.AxisItem.mouseClickEvent = mouseClickEvent
 
 
 

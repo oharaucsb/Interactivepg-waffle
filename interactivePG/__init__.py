@@ -1,8 +1,10 @@
 import numpy as np
 from PyQt4 import QtGui, QtCore
 try:
-    from . import axisItemFix
-except ImportError:
+    from fixes import axisItemFix
+    from fixes import legendItemFix
+except ImportError as e:
+    print "failed importing axisfixes", e
     import sys
     print(sys.path)
 import pyqtgraph as pg
@@ -88,6 +90,45 @@ def loglog(*args, **kwargs):
     p = plot(*args, **kwargs)
     p.setLogMode(x=True, y=True)
     return p
+
+def ylim(*args, **kwargs):
+    try:
+        plt = plotList["__LAST_FIG"]
+    except:
+        return
+    if kwargs.get("padding", None) is None:
+        kwargs["padding"] = 0
+    plt.plotWidget.setYRange(*args, **kwargs)
+
+def xlim(*args, **kwargs):
+    try:
+        plt = plotList["__LAST_FIG"]
+    except:
+        return
+    if kwargs.get("padding", None) is None:
+        kwargs["padding"] = 0
+    plt.plotWidget.setXRange(*args, **kwargs)
+
+def xlabel(text=None, units=None):
+    try:
+        plt = plotList["__LAST_FIG"]
+    except:
+        return
+    plt.plotWidget.plotItem.setLabel("bottom", text=text, units=units)
+
+def ylabel(text=None, units=None):
+    try:
+        plt = plotList["__LAST_FIG"]
+    except:
+        return
+    plt.plotWidget.plotItem.setLabel("left", text=text, units=units)
+
+def title(text=None, **kwargs):
+    try:
+        plt = plotList["__LAST_FIG"]
+    except:
+        return
+    plt.plotWidget.plotItem.setTitle(text, **kwargs)
 
 def legend(*args, **kwargs):
     global plotList
