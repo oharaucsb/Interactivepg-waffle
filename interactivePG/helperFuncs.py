@@ -15,6 +15,8 @@ def parsePenFormatString(st):
     match = re.search(styPat, st)
     if match:
         settingDict["style"] = match.group()
+    else:
+        settingDict["style"] = "_"
 
     symPat = 'o|s|t|d|\+|x'
     match = re.search(symPat, st)

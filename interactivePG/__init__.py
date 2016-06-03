@@ -1,8 +1,7 @@
 import numpy as np
 from PyQt4 import QtGui, QtCore
 try:
-    from fixes import axisItemFix
-    from fixes import legendItemFix
+    from fixes import axisItemFix, legendItemFix, ItemSampleFix
 except ImportError as e:
     print "failed importing axisfixes", e
     import sys

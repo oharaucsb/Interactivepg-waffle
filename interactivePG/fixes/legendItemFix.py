@@ -15,36 +15,35 @@ class LegendSettingsDialog(QtGui.QDialog):
     def __init__(self, *args, **kwargs):
         self.legendItem = kwargs.pop("legendItem", pyqtgraph.LegendItem())
         super(LegendSettingsDialog, self).__init__(*args, **kwargs)
-        self._pen = self.legendItem.backgroundPen.color()
-        self._brush = self.legendItem.backgroundBrush.color()
-        self._font = self.legendItem.items[-1][1].opts.get("size", config_options["legendFontSize"]).split('p')[0]
-        self.initUI()
+        self.initialSettings = {
+            "pen": self.legendItem.backgroundPen.color(),
+            "brush": self.legendItem.backgroundBrush.color(),
+            "font": self.legendItem.items[-1][1].opts.get("size", config_options["legendFontSize"]).split('p')[0]
+        }
 
-    def initUI(self):
         self.ui = Ui_LegendSettingsDialog()
         self.ui.setupUi(self)
-        self.ui.bBGColor.setColor(self._brush)
-        self.ui.bBorderColor.setColor(self._pen)
-        self.ui.sbFontSize.setValue(self._font)
+        self.initUI()
 
-        self.ui.bBGColor.sigColorChanging.connect(self.updateBrushColor)
-        self.ui.bBorderColor.sigColorChanging.connect(self.updatePenColor)
-        self.ui.sbFontSize.setOpts(int=True, step=1, min=1)
-        self.ui.sbFontSize.sigValueChanging.connect(self.updateFontSize)
+        self.ui.bBGColor.sigColorChanging.connect(self.updateLegend)
+        self.ui.bBorderColor.sigColorChanging.connect(self.updateLegend)
+        self.ui.sbFontSize.setOpts(int=True, step=1, bounds=(1,100))
+        self.ui.sbFontSize.sigValueChanging.connect(self.updateLegend)
 
-    def updateBrushColor(self):
-        self.legendItem.setBackgroundBrush(mkBrush(self.ui.bBGColor.color()))
-        self.legendItem.update()
+    def initUI(self):
+        self.ui.bBGColor.setColor(self.initialSettings["brush"])
+        self.ui.bBorderColor.setColor(self.initialSettings["pen"])
+        self.ui.sbFontSize.setValue(int(self.initialSettings["font"]))
 
-    def updatePenColor(self):
+    def updateLegend(self):
         self.legendItem.setBackgroundPen(mkPen(self.ui.bBorderColor.color()))
-        self.legendItem.update()
-
-    def updateFontSize(self):
+        self.legendItem.setBackgroundBrush(mkBrush(self.ui.bBGColor.color()))
         for sample, label in self.legendItem.items:
             # label.setAttr("size", "{}pt".format(self.ui.sbFontSize.value()))
             label.setText(label.text, size="{}pt".format(self.ui.sbFontSize.value()))
             sample.setScale(self.ui.sbFontSize.value()/10.)
+            label.setGeometry(label.item.boundingRect())
+        self.legendItem.layout.setColumnMinimumWidth(0, 10*self.ui.sbFontSize.value()/10.)
         self.legendItem.update()
         self.legendItem.updateSize()
 
@@ -53,13 +52,8 @@ class LegendSettingsDialog(QtGui.QDialog):
         dialog = LegendSettingsDialog(legendItem=legendItem)
         ok = dialog.exec_()
         if not ok:
-            dialog.ui.bBGColor.setColor(dialog._brush)
-            print "setting bg to color", dialog._brush.name()
-            dialog.ui.bBorderColor.setColor(dialog._pen)
-            dialog.ui.sbFontSize.setValue(dialog._font)
-            dialog.updateBrushColor()
-            dialog.updatePenColor()
-            dialog.updateFontSize()
+            dialog.initUI()
+            dialog.updateLegend()
 
 
 
@@ -88,6 +82,10 @@ def paint(self, p, *args):
     p.setPen(self.backgroundPen)
     p.setBrush(self.backgroundBrush)
     p.drawRect(self.boundingRect())
+    # for samp, label in self.items:
+    #     p.translate(label.geometry().x(), label.geometry().y())
+    #     p.drawRect(label.itemRect())
+    #     p.translate(-label.geometry().x(), -label.geometry().y())
 
 def setBackgroundPen(self, p):
     self.backgroundPen = mkPen(p)
@@ -100,11 +98,40 @@ def mouseClickedEvent(self, ev):
         self.openSettings()
 
 def openSettings(self):
+    import pyqtgraph.console as pgc
+    # self.a = pgc.ConsoleWidget(namespace={"self":self})
+    # self.a.show()
     LegendSettingsDialog.makeSettings(self)
+
+
+
+def updateSize(self):
+    if self.size is not None:
+        return
+
+    height = 0
+    width = 0
+    symWidth = 0
+    labelWidth = 0
+    #print("-------")
+    for sample, label in self.items:
+        height += max(sample.height(), label.height()) + 3
+        width = max(width, sample.width()+label.width())
+        symWidth = max(symWidth, sample.boundingRect().width()*sample.scale())
+        labelWidth = max(labelWidth, label.boundingRect().width())
+        #print(width, height)
+    #print width, height
+    self.setGeometry(0, 0, width+25, height)
+    self.layout.setColumnMaximumWidth(0,symWidth)
+    self.layout.setColumnMinimumWidth(0,symWidth)
+    self.layout.setColumnMaximumWidth(1, labelWidth)
+    self.layout.setColumnMinimumWidth(1, labelWidth)
+
 
 pyqtgraph.LegendItem.__init__ = __init__
 pyqtgraph.LegendItem.paint = paint
 pyqtgraph.LegendItem.setParentItem = setParentItem
+pyqtgraph.LegendItem.updateSize = updateSize
 pyqtgraph.LegendItem.setBackgroundPen = setBackgroundPen
 pyqtgraph.LegendItem.setBackgroundBrush = setBackgroundBrush
 
