@@ -138,6 +138,8 @@ def newDrawSpecs(self, p):
     if False:
         self = pyqtgraph.AxisItem
     axisSpec, tickSpecs, textSpecs = oldDrawSpecs(self, p)
+    if not self.style["showValues"]:
+        return axisSpec, tickSpecs, textSpecs
 
 
     bounds = self.mapRectFromParent(self.geometry())
