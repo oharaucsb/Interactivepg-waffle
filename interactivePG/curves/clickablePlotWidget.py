@@ -716,6 +716,8 @@ class CurveItemSettings(QtGui.QDialog):
             p = pg.mkPen(curve.opts["pen"])
             p.setColor(colorButton.color())
             curve.setPen(p)
+        self.ui.colMarker.setColor(colorButton.color())
+        self.updateMarkerBrushColor(colorButton)
 
     def updateLineStyle(self, newIdx):
         for listItem in self.ui.lwCurves.selectedItems():
@@ -767,8 +769,17 @@ class CurveItemSettings(QtGui.QDialog):
                 # curve.opts = dialog.originalSettings[curve].copy()
                 curve.opts.update(dialog.originalSettings[curve])
                 curve.updateItems()
+                if not curve.opts["isEnabled"]:
+                    curve.curve.hide()
+                    curve.scatter.hide()
+                    if hasattr(curve, 'errorbars'):
+                        curve.errorbars.hide()
                 if curve.opts["plotWidget"].plotItem.legend is not None:
                     curve.opts["plotWidget"].updateLegendNames(curve)
+        else:
+            for curve in curves:
+                if not curve.opts["isEnabled"]:
+                    curve.opts["isSelected"] = False
 
 
 if __name__=='__main__':

@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt4 import QtGui, QtCore
 try:
-    from fixes import axisItemFix, legendItemFix, ItemSampleFix
+    from fixes import axisItemFix, legendItemFix, ItemSampleFix, PlotItemFix
 except ImportError as e:
     print "failed importing axisfixes", e
     import sys
@@ -88,6 +88,16 @@ def semilogx(*args, **kwargs):
 def loglog(*args, **kwargs):
     p = plot(*args, **kwargs)
     p.setLogMode(x=True, y=True)
+    return p
+
+def yscale(mode='log'):
+    p = plotList["__LAST_FIG"]
+    p.setLogMode(y=mode=='log')
+    return p
+
+def xscale(mode='log'):
+    p = plotList["__LAST_FIG"]
+    p.setLogMode(x=mode=='log')
     return p
 
 def ylim(*args, **kwargs):
