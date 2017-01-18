@@ -56,14 +56,6 @@ class LegendSettingsDialog(QtGui.QDialog):
             dialog.updateLegend()
 
 
-
-
-
-
-
-
-
-
 oldinit = pyqtgraph.LegendItem.__init__
 def __init__(self, size=None, offset=None):
     oldinit(self, size, offset)
@@ -74,6 +66,7 @@ def __init__(self, size=None, offset=None):
 
 oldparent = pyqtgraph.LegendItem.setParentItem
 def setParentItem(self, p):
+    print "set parent item in legenditemfix", p
     ret = oldparent(self, p)
     self.scene().sigMouseClicked.connect(self.mouseClickedEvent)
     return ret
@@ -99,11 +92,9 @@ def mouseClickedEvent(self, ev):
 
 def openSettings(self):
     import pyqtgraph.console as pgc
-    # self.a = pgc.ConsoleWidget(namespace={"self":self})
-    # self.a.show()
+    self.a = pgc.ConsoleWidget(namespace={"self":self})
+    self.a.show()
     LegendSettingsDialog.makeSettings(self)
-
-
 
 def updateSize(self):
     if self.size is not None:
@@ -128,6 +119,7 @@ def updateSize(self):
     self.layout.setColumnMinimumWidth(1, labelWidth)
 
 
+pyqtgraph.ViewBox
 pyqtgraph.LegendItem.__init__ = __init__
 pyqtgraph.LegendItem.paint = paint
 pyqtgraph.LegendItem.setParentItem = setParentItem

@@ -59,7 +59,8 @@ class PlotDataErrorItem(pg.PlotDataItem):
         kwargs.update({'y': self.yDisp})
 
         if yMode:
-            kwargs.update({'height': np.log10(2*self.errorData)})
+            # kwargs.update({'height': np.log10(2*self.errorData)})
+            kwargs.update({'height': 0.434*self.errorData/self.yData})
         else:
             kwargs.update({'height': 2*self.errorData})
         self.errorbars.setData(**kwargs)

@@ -107,6 +107,13 @@ def ylim(*args, **kwargs):
         return
     if kwargs.get("padding", None) is None:
         kwargs["padding"] = 0
+
+    # Need to match matplotlib style to pyqtgraph.
+    # matplotlib wants a list, pyqtgraph wants positional arguments
+    if isinstance(args[0], list):
+        args = list(args)
+        args = args[0] + args[1:]
+    # print "DEBUG: ylim:", args, kwargs
     plt.plotWidget.setYRange(*args, **kwargs)
 
 def xlim(*args, **kwargs):
