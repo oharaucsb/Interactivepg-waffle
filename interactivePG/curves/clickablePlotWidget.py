@@ -56,7 +56,7 @@ class ClickablePlotWidget(pg.PlotWidget):
                             "p0": None,
                             "menu": None,
                             "fitCurve": pg.PlotDataItem(pen=pg.mkPen('k', width=3)),
-                            "pText": pg.TextItem("this is an example text", color=(0, 0, 0))}
+                            "pText": pg.TextItem("Select a function", color=(0, 0, 0))}
 
         self.crosshairSettings = {"crosshairsVisible": False,
                                   "freeCrosshairs": False,
@@ -535,10 +535,6 @@ class ClickablePlotWidget(pg.PlotWidget):
                 self.crosshairSettings["dataCrosshairsIdx"] = np.argmin(dist)
                 self.updateDataCrosshairs()
             self.updateCrosshairWindow()
-
-
-
-
 
 
 class CurveItemSettings(QtGui.QDialog):

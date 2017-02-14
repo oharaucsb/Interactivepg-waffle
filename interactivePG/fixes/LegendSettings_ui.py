@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\dvalovcin\Documents\GitHub\Interactivepg-waffle\interactivePG\fixes\LegendSettings.ui'
+# Form implementation generated from reading ui file 'legendSettings.ui'
 #
-# Created by: PyQt4 UI code generator 4.11.4
+# Created: Mon Feb 13 21:17:02 2017
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -25,7 +26,7 @@ except AttributeError:
 class Ui_LegendSettingsDialog(object):
     def setupUi(self, LegendSettingsDialog):
         LegendSettingsDialog.setObjectName(_fromUtf8("LegendSettingsDialog"))
-        LegendSettingsDialog.resize(174, 127)
+        LegendSettingsDialog.resize(207, 319)
         self.verticalLayout = QtGui.QVBoxLayout(LegendSettingsDialog)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.formLayout = QtGui.QFormLayout()
@@ -51,6 +52,19 @@ class Ui_LegendSettingsDialog(object):
         self.sbFontSize.setObjectName(_fromUtf8("sbFontSize"))
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.sbFontSize)
         self.verticalLayout.addLayout(self.formLayout)
+        self.groupBox = QtGui.QGroupBox(LegendSettingsDialog)
+        self.groupBox.setFlat(True)
+        self.groupBox.setObjectName(_fromUtf8("groupBox"))
+        self.verticalLayout_2 = QtGui.QVBoxLayout(self.groupBox)
+        self.verticalLayout_2.setContentsMargins(0, 10, 0, 0)
+        self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.teDesc = QtGui.QTextEdit(self.groupBox)
+        self.teDesc.setObjectName(_fromUtf8("teDesc"))
+        self.verticalLayout_2.addWidget(self.teDesc)
+        self.widget = QtGui.QWidget(self.groupBox)
+        self.widget.setObjectName(_fromUtf8("widget"))
+        self.verticalLayout_2.addWidget(self.widget)
+        self.verticalLayout.addWidget(self.groupBox)
         self.buttonBox = QtGui.QDialogButtonBox(LegendSettingsDialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
@@ -67,5 +81,6 @@ class Ui_LegendSettingsDialog(object):
         self.label.setText(_translate("LegendSettingsDialog", "Background Color:", None))
         self.label_2.setText(_translate("LegendSettingsDialog", "Border Color:", None))
         self.label_3.setText(_translate("LegendSettingsDialog", "Font Size", None))
+        self.groupBox.setTitle(_translate("LegendSettingsDialog", "Item Description", None))
 
-from pyqtgraph import ColorButton, SpinBox
+from pyqtgraph import SpinBox, ColorButton

@@ -104,6 +104,15 @@ def getPlotPens(pw, *args, **kwargs):
         if 'symbol' in kwargs and 'symbolBrush' not in kwargs:
             kwargs['symbolBrush'] = pg.mkBrush(color=color)
 
+        if "symbol" not in kwargs:
+            # If you don't specify a symbol, default the colors to
+            # the line values to match if you turn them on.
+            kwargs['symbolPen'] = pg.mkPen(color=color)
+            kwargs['symbolBrush'] = pg.mkBrush(color=color)
+            # Not quite sure why this has to get put in. Base pyqtgraph
+            # may put circle default if pens are specified?
+            kwargs["symbol"] = None
+
 
         width = kwargs.get('linewidth', config_options["linewidth"])
 

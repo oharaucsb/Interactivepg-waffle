@@ -11,6 +11,22 @@ grey background. Modify the class methods to allow you to change
 that.
 
 """
+
+def createLegendList(descriptor):
+    """
+    Given a string with item/name descriptions and
+    create pairs of ItemSamples/name to be populated into the legend
+    """
+    pass
+
+def createDescriptorFromLegend(legend):
+    """
+    Given a legend item, create the string descriptor
+    which would create it. 
+    """
+    pass
+
+
 class LegendSettingsDialog(QtGui.QDialog):
     def __init__(self, *args, **kwargs):
         self.legendItem = kwargs.pop("legendItem", pyqtgraph.LegendItem())
@@ -55,7 +71,6 @@ class LegendSettingsDialog(QtGui.QDialog):
             dialog.initUI()
             dialog.updateLegend()
 
-
 oldinit = pyqtgraph.LegendItem.__init__
 def __init__(self, size=None, offset=None):
     oldinit(self, size, offset)
@@ -67,7 +82,10 @@ def __init__(self, size=None, offset=None):
 oldparent = pyqtgraph.LegendItem.setParentItem
 def setParentItem(self, p):
     print "set parent item in legenditemfix", p
+    print "current parent", self.parent()
     ret = oldparent(self, p)
+    self.setParent(p)
+    print "new parent", self.parent()
     self.scene().sigMouseClicked.connect(self.mouseClickedEvent)
     return ret
 
@@ -120,6 +138,7 @@ def updateSize(self):
 
 
 pyqtgraph.ViewBox
+pyqtgraph.GraphicsScene
 pyqtgraph.LegendItem.__init__ = __init__
 pyqtgraph.LegendItem.paint = paint
 pyqtgraph.LegendItem.setParentItem = setParentItem
@@ -130,11 +149,21 @@ pyqtgraph.LegendItem.setBackgroundBrush = setBackgroundBrush
 pyqtgraph.LegendItem.openSettings = openSettings
 pyqtgraph.LegendItem.mouseClickedEvent = mouseClickedEvent
 
+# pyqtgraph.LegendItem.__init__ = LegendItemFix.__init__
+# pyqtgraph.LegendItem.paint = LegendItemFix.paint
+# pyqtgraph.LegendItem.setParentItem = LegendItemFix.setParentItem
+# pyqtgraph.LegendItem.updateSize = LegendItemFix.updateSize
+# pyqtgraph.LegendItem.setBackgroundPen = LegendItemFix.setBackgroundPen
+# pyqtgraph.LegendItem.setBackgroundBrush = LegendItemFix.setBackgroundBrush
+#
+# pyqtgraph.LegendItem.openSettings = LegendItemFix.openSettings
+# pyqtgraph.LegendItem.mouseClickedEvent = LegendItemFix.mouseClickedEvent
 
 
 
 
 
+# pyqtgraph.LegendItem = LegendItemFix
 
 
 
