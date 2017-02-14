@@ -11,6 +11,7 @@ from .packageSettings import config_options
 from .images.imagePlot import image as ipimage
 from .curves.clickablePlotWidget import ClickablePlotWidget as PlotWidget
 from .plotContainerWindow import PlotContainerWindow
+from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContainer as ImageView
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])
 

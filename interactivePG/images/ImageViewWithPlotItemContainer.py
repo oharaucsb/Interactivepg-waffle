@@ -48,6 +48,15 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
 
         auto = self.ui.histogram.item.vb.menu.addAction("Autoscale Histogram")
         auto.triggered.connect(lambda: self.ui.histogram.item.imageChanged(True))
+
+        self.view.removeItem(self.roi)
+        self.roi = pg.LineSegmentROI([(0, 0), (0, 10)])
+        self.roi.setZValue(20)
+        self.view.addItem(self.roi)
+        self.roi.hide()
+        self.roi.sigRegionChanged.connect(self.roiChanged)
+        self.roiCurve.setPen('k')
+
     def setImage(self, *args, **kwargs):
         """
         New arg features:
@@ -159,3 +168,19 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
             self.ui.histogram.item.gradient.loadPreset(cmap)
         # For some reason, it hasn't been updating the color levels.
         self.ui.histogram.item.imageChanged(True)
+
+    def roiChanged(self):
+        if self.image is None:
+            return
+
+        image = self.getProcessedImage()
+        if image.ndim == 2:
+            axes = (0, 1)
+        elif image.ndim == 3:
+            axes = (1, 2)
+        else:
+            return
+        data = self.roi.getArrayRegion(image.view(np.ndarray), self.imageItem, axes)[0]
+
+        self.roiCurve.setData(y=data)
+
