@@ -121,8 +121,17 @@ class exp(FuncHelper):
         y1 = y[0]
         y2 = y[-1]
 
-        l = np.log(y1/y2)/(x1-x2) * np.sign(y1-y2)
-        A = np.exp(np.log(y2)-l*x2) * np.sign(y1-y2)
+        yi = y[y.size // 2]
+        xi = x[y.size // 2]
+
+        d2 = (y2-yi)/(x2-xi) - (yi-y1)/(xi-x1)
+        d2 = np.sign(d2)
+
+        l = np.log(y1/y2)/(x1-x2)
+        A = np.exp(np.log(y2)-l*x2)
+
+        l *= d2
+        A *= d2 * np.sign(y2-y1)
 
 
         return [A, l, offset]

@@ -115,6 +115,19 @@ class ClickablePlotWidget(pg.PlotWidget):
         # of my stuff depends heavily on plotItem.curves and I don't want
         # the fit curve to be seen with it.
         self.plotItem.vb.addItem(self.fitSettings["fitCurve"])
+
+        self.plotItem.ctrl.logXCheck.toggled.connect(
+            lambda: self.fitSettings["fitCurve"].setLogMode(
+                self.plotItem.ctrl.logXCheck.isChecked(),
+                self.plotItem.ctrl.logYCheck.isChecked()
+            )
+        )
+        self.plotItem.ctrl.logYCheck.toggled.connect(
+            lambda: self.fitSettings["fitCurve"].setLogMode(
+                self.plotItem.ctrl.logXCheck.isChecked(),
+                self.plotItem.ctrl.logYCheck.isChecked()
+            )
+        )
         self.fitSettings["fitCurve"].hide()
 
         self.removeFitRegion()

@@ -89,18 +89,40 @@ class AxisSettingsDialog(QtGui.QDialog):
         self.axisItem.setLabel(
                 self.ui.tTitle.text(),
                 **{"font-size":"{}pt".format(self.ui.sbSize.value())})
-        self.axisItem.tickFont.setPointSize(self.ui.sbSize.value())
+        try:
+            self.axisItem.tickFont.setPointSize(self.ui.sbSize.value())
+        except AttributeError:
+            # Happens when trying to set the scale on a hidden axis
+            pass
         # self.axisItem.setRange(self.ui.tFrom.value(), self.ui.tTo.value())
         if self.axisItem.orientation in ["top", "bottom"]:
-            self.axisItem.getViewBox().setRange(xRange=[self.ui.tFrom.value(),
-                                                        self.ui.tTo.value()],
-                                                padding=0)
-            self.axisItem.parentItem().setLogMode(x=self.ui.cbMode.currentIndex())
+            # self.axisItem.linkedView().setRange(xRange=[self.ui.tFrom.value(),
+            #                                             self.ui.tTo.value()],
+            #                                     padding=0)
+            # self.axisItem.linkedView().setLogMode(x=self.ui.cbMode.currentIndex())
+            rangekwargs = {"xRange": [self.ui.tFrom.value(), self.ui.tTo.value()],
+                           "padding": 0}
+            logkwargs = {"x": self.ui.cbMode.currentIndex()}
         else:
-            self.axisItem.getViewBox().setRange(yRange=[self.ui.tFrom.value(),
-                                                        self.ui.tTo.value()],
-                                                padding=0)
-            self.axisItem.parentItem().setLogMode(y=self.ui.cbMode.currentIndex())
+            rangekwargs = {"yRange": [self.ui.tFrom.value(), self.ui.tTo.value()],
+                           "padding": 0}
+            logkwargs = {"y": self.ui.cbMode.currentIndex()}
+            # self.axisItem.linkedView().setRange(yRange=[self.ui.tFrom.value(),
+            #                                             self.ui.tTo.value()],
+            #                                     padding=0)
+            # self.axisItem.linkedView().setLogMode(y=self.ui.cbMode.currentIndex())
+
+
+        self.axisItem.linkedView().setRange(**rangekwargs)
+        try:
+            self.axisItem.linkedView().setLogMode(**logkwargs)
+        except AttributeError:
+            # Axis items in histogram views are not instantiated from a PlotItem,
+            # but manually added to a graphics layout and linkd to a view.
+            # As such, there's no plot item to handle telling everything to
+            # logMode
+            pass
+
 
 
         if self.ui.tMajSpacing.value()==-2:
@@ -243,6 +265,7 @@ def newDrawSpecs(self, p):
 oldinit = pyqtgraph.AxisItem.__init__
 def __init__(self, *args, **kwargs):
     oldinit(self, *args, **kwargs)
+    self.setParent(kwargs.get("parent", None))
     try:
         self.parent().scene().sigMouseClicked.connect(self.mouseClickEvent)
     except AttributeError:
@@ -251,16 +274,66 @@ def __init__(self, *args, **kwargs):
 
 def mouseClickEvent(self, ev):
     if ev.double():
-        # self.a = pgc.ConsoleWidget(namespace={"self":self})
-        # self.a.show()
+        self.a = pgc.ConsoleWidget(namespace={"self":self})
+        self.a.show()
 
         AxisSettingsDialog.makeSettings(axisItem=self)
 
+def logReplacer(x):
+    # st = st.replace('e','10<sup>')
+    # st += "</sup>"
+    # x = np.log10(x)
+    if x>0 or x%1==0:
+        st = "{:.0f}e{:.0f}".format(10**(x-int(x)), int(x))
+    else:
+        st = "{:.0f}e{:.0f}".format(10 ** (x - int(x)+1), int(x)-1)
 
+
+    return st
+
+def logTickStrings(self, values, scale, spacing):
+    # print "log tick strings", values
+    return [logReplacer(x) for x in np.array(values).astype(float)]
+    return ["%0.1g\\"%x+logReplacer(x) for x in 10 ** np.array(values).astype(float)]
+
+def drawPicture(self, p, axisSpec, tickSpecs, textSpecs):
+    # profiler = debug.Profiler()
+
+    p.setRenderHint(p.Antialiasing, False)
+    p.setRenderHint(p.TextAntialiasing, True)
+
+    ## draw long line along axis
+    pen, p1, p2 = axisSpec
+    p.setPen(pen)
+    p.drawLine(p1, p2)
+    p.translate(0.5, 0)  ## resolves some damn pixel ambiguity
+
+    ## draw ticks
+    for pen, p1, p2 in tickSpecs:
+        p.setPen(pen)
+        p.drawLine(p1, p2)
+    # profiler('draw ticks')
+
+    ## Draw all text
+    for rect, flags, text in textSpecs:
+        td = QtGui.QTextDocument()
+        td.setHtml(text)
+        p.translate()
+        td.drawContents(p, rect)
+
+    # if self.tickFont is not None:
+    #     p.setFont(self.tickFont)
+    # p.setPen(self.pen())
+    # for rect, flags, text in textSpecs:
+    #     p.drawText(rect, flags, text)
+        # p.drawRect(rect)
+    # profiler('draw text')
 
 pyqtgraph.AxisItem.generateDrawSpecs = newDrawSpecs
 pyqtgraph.AxisItem.__init__ = __init__
 pyqtgraph.AxisItem.mouseClickEvent = mouseClickEvent
+pyqtgraph.AxisItem.logTickStrings = logTickStrings
+# pyqtgraph.AxisItem.drawPicture = drawPicture
 
 
 

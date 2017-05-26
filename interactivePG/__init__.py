@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt4 import QtGui, QtCore
 try:
-    from fixes import axisItemFix, legendItemFix, ItemSampleFix, PlotItemFix
+    from fixes import axisItemFix, legendItemFix, ItemSampleFix, PlotItemFix, linearRegionItemFix
 except ImportError as e:
     print "failed importing axisfixes", e
     import sys
@@ -14,7 +14,6 @@ from .plotContainerWindow import PlotContainerWindow
 from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContainer as ImageView
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])
-
 
 
 plotList = {}
@@ -205,3 +204,13 @@ def figure(*args, **kwargs):
 
 
     return plt
+
+def addLine(*args, **kwargs):
+    line = pg.InfiniteLine(*args, **kwargs)
+    curPlot = gcf()
+    curPlot.plotWidget.getPlotItem().addItem(line)
+    return line
+
+def gcf():
+    return plotList["__LAST_FIG"]
+    return plotList.get("__LAST_FIG", None)
