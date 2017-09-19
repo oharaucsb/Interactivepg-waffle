@@ -524,6 +524,7 @@ class ClickablePlotWidget(pg.PlotWidget):
     def addLegend(self, *args, **kwargs):
         if self.plotItem.legend is None:
             self.plotItem.addLegend()
+        return self.plotItem.legend
 
     def mouseClickedEvent(self, ev):
         # Intercept if the crosshairs

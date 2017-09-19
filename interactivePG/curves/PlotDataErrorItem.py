@@ -66,7 +66,15 @@ class PlotDataErrorItem(pg.PlotDataItem):
         self.errorbars.setData(**kwargs)
 
     def updateItems(self):
-        super(PlotDataErrorItem, self).updateItems()
+        try:
+            super(PlotDataErrorItem, self).updateItems()
+        except IndexError:
+            # Causes an index error in pyqtgraph built in things for
+            # creating shapes. Not sure how to fix this right now
+            pass
+            # raise
+        except np.VisibleDeprecationWarning:
+            pass
         self.errorbars.setData(**self.opts)
 
 

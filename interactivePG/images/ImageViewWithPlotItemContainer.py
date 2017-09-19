@@ -91,7 +91,7 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
                 ))
         img = img.copy()
         x, y = kwargs.pop('x', None), kwargs.pop('y', None)
-        if None not in [x, y]:
+        if x is not None and y is not None:
             # adjust the img vector to account forunequal spacings
             newX = np.arange(x.min(), x.max(), np.diff(x).min() / 3.)
             newY = np.arange(y.min(), y.max(), np.diff(y).min() / 3.)
@@ -183,4 +183,3 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
         data = self.roi.getArrayRegion(image.view(np.ndarray), self.imageItem, axes)[0]
 
         self.roiCurve.setData(y=data)
-

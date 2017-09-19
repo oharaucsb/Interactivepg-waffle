@@ -22,7 +22,7 @@ def createLegendList(descriptor):
 def createDescriptorFromLegend(legend):
     """
     Given a legend item, create the string descriptor
-    which would create it. 
+    which would create it.
     """
     pass
 
@@ -81,11 +81,11 @@ def __init__(self, size=None, offset=None):
 
 oldparent = pyqtgraph.LegendItem.setParentItem
 def setParentItem(self, p):
-    print "set parent item in legenditemfix", p
-    print "current parent", self.parent()
+    # print "set parent item in legenditemfix", p
+    # print "current parent", self.parent()
     ret = oldparent(self, p)
     self.setParent(p)
-    print "new parent", self.parent()
+    # print "new parent", self.parent()
     self.scene().sigMouseClicked.connect(self.mouseClickedEvent)
     return ret
 
@@ -136,6 +136,9 @@ def updateSize(self):
     self.layout.setColumnMaximumWidth(1, labelWidth)
     self.layout.setColumnMinimumWidth(1, labelWidth)
 
+# Drop-in support for matplotlib legends.
+def draggable(self, bl=False):
+    pass
 
 pyqtgraph.ViewBox
 pyqtgraph.GraphicsScene
@@ -147,6 +150,7 @@ pyqtgraph.LegendItem.setBackgroundPen = setBackgroundPen
 pyqtgraph.LegendItem.setBackgroundBrush = setBackgroundBrush
 
 pyqtgraph.LegendItem.openSettings = openSettings
+pyqtgraph.LegendItem.draggable = draggable
 pyqtgraph.LegendItem.mouseClickedEvent = mouseClickedEvent
 
 # pyqtgraph.LegendItem.__init__ = LegendItemFix.__init__
@@ -164,50 +168,3 @@ pyqtgraph.LegendItem.mouseClickedEvent = mouseClickedEvent
 
 
 # pyqtgraph.LegendItem = LegendItemFix
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

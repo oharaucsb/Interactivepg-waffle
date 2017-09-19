@@ -151,8 +151,10 @@ def legend(*args, **kwargs):
     try:
         plt = plotList["__LAST_FIG"]
     except KeyError:
+        print "it's a key error"
         return
-    plt.addLegend()
+    return plt.addLegend()
+    print "added", plt
     # for curve in plt.plotItem.curves:
     #     plt.plotItem.legend.addItem(curve, curve.name())
 

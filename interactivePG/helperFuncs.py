@@ -36,7 +36,7 @@ def plotArgsParser(*args):
     """
     settingDict = {}
     args = list(args)
-    for arg in args:
+    for idx, arg in enumerate(args):
         if not isinstance(arg, str):
             continue
         # colPat = 'b|g|r|c|k|m'
@@ -55,7 +55,9 @@ def plotArgsParser(*args):
         #     settingDict["symbol"] = match.group()
         pens = parsePenFormatString(arg)
         settingDict.update(pens)
-        args.remove(arg)
+        # args.remove(arg)
+        # remove it from the args list
+        del args[idx]
         break
     return tuple(args), settingDict
 
