@@ -3,9 +3,9 @@ from PyQt5 import QtGui, QtCore
 try:
     from .fixes import axisItemFix, legendItemFix, ItemSampleFix, PlotItemFix, linearRegionItemFix
 except ImportError as e:
-    print(("failed importing axisfixes", e))
+    print("failed importing axisfixes", e)
     import sys
-    print((sys.path))
+    print(sys.path)
     raise
 import pyqtgraph as pg
 from .packageSettings import config_options
@@ -22,7 +22,7 @@ plotList = {}
 imageList = []
 
 def getKeyFromItem(item, dic):
-    for k, v in list(dic.items()):
+    for k, v in dic.items():
         if v is item:
             return k
 
@@ -155,7 +155,7 @@ def legend(*args, **kwargs):
         print("it's a key error")
         return
     return plt.addLegend()
-    print(("added", plt))
+    print("added", plt)
     # for curve in plt.plotItem.curves:
     #     plt.plotItem.legend.addItem(curve, curve.name())
 
@@ -174,10 +174,10 @@ def plotDestroyed(plotWidget):
     except IndexError:
         pass
     except Exception:
-        print(("Error removing plotWidget from list", plotWidget, plotList))
+        print("Error removing plotWidget from list", plotWidget, plotList)
 
 def imageDestroyed(*args, **kwargs):
-    print(("Image destroyed", args, kwargs))
+    print("Image destroyed", args, kwargs)
 
 def figure(*args, **kwargs):
     global qApp, plotList

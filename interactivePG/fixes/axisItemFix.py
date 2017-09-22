@@ -1,8 +1,8 @@
 import numpy as np
 import pyqtgraph
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 import pyqtgraph.console as pgc
-from AxisSettings_ui import Ui_AxisSettingsDialog
+from .AxisSettings_ui import Ui_AxisSettingsDialog
 
 # pyqtgraph's axis item is slightly broken
 # it doesn't account for the increase

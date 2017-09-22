@@ -162,7 +162,7 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
 
                     img = img[None,:,:]
         cmap = kwargs.pop("cmap", None)
-        print("plot args", args, kwargs)
+        print "plot args", args, kwargs
         super(ImageViewWithPlotItemContainer, self).setImage(img, *args, **kwargs)
         if cmap is not None:
             self.ui.histogram.item.gradient.loadPreset(cmap)

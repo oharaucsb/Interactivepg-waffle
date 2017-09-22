@@ -1,6 +1,6 @@
 import numpy as np
 import pyqtgraph
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 from pyqtgraph.graphicsItems.ScatterPlotItem import drawSymbol
 from pyqtgraph.graphicsItems.LegendItem import ItemSample
 from pyqtgraph.graphicsItems.ScatterPlotItem import ScatterPlotItem

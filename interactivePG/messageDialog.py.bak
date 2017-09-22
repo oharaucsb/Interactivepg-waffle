@@ -1,6 +1,6 @@
 import numpy as np
 import pyqtgraph
-from PyQt5 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
 
 dialogList = []
 class MessageDialog(QtGui.QDialog):
@@ -30,7 +30,7 @@ class MessageDialog(QtGui.QDialog):
         try:
             dialogList.remove(self)
         except Exception as E:
-            print(("Error removing from list, ",E))
+            print("Error removing from list, ",E)
 
         super(MessageDialog, self).close()
 

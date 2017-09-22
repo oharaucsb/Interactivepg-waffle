@@ -1,7 +1,7 @@
 import numpy as np
 import weakref
 import pyqtgraph
-from PyQt5 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
 from pyqtgraph import PlotItem
 from pyqtgraph import GraphicsWidget
 from pyqtgraph import pixmaps
@@ -199,7 +199,7 @@ def __init__(self, parent=None, name=None, labels=None, title=None, viewBox=None
             labels[label] = kargs[label]
             del kargs[label]
     for k in labels:
-        if isinstance(labels[k], str):
+        if isinstance(labels[k], basestring):
             labels[k] = (labels[k],)
         self.setLabel(k, *labels[k])
 

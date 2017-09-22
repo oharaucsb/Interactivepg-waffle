@@ -1,9 +1,9 @@
 import numpy as np
 import pyqtgraph
 from pyqtgraph import mkPen, mkBrush
-from PyQt5 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
 from ..packageSettings import config_options
-from .LegendSettings_ui import Ui_LegendSettingsDialog
+from LegendSettings_ui import Ui_LegendSettingsDialog
 """
 
 pyqtgraph's legend item has a hard-coded slightly transparent,
