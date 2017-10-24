@@ -92,40 +92,43 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
         img = img.copy()
         x, y = kwargs.pop('x', None), kwargs.pop('y', None)
         if x is not None and y is not None:
-            # adjust the img vector to account forunequal spacings
-            newX = np.arange(x.min(), x.max(), np.diff(x).min() / 3.)
-            newY = np.arange(y.min(), y.max(), np.diff(y).min() / 3.)
-            newZ = np.zeros((newX.size, newY.size))
+            if kwargs.pop("unequalSpacings", False):
+                # adjust the img vector to account forunequal spacings
+                newX = np.arange(x.min(), x.max(), np.diff(x).min() / 3.)
+                newY = np.arange(y.min(), y.max(), np.diff(y).min() / 3.)
+                newZ = np.zeros((newX.size, newY.size))
 
-            # Define the new bins to be as wide as the sum of half the upper
-            # and lower difference between neighboring points.
-            # if [a, b, c, d], then pixel b would span from
-            # b-(b-a)/2 to b+ (c-b)/2
-            # This mimics origin's methods
-            # First pixel is set as wide as the difference between
-            # the first and second pixel
-            diffsx = np.diff(x)[:-1]/2+np.diff(x)[1:]/2
-            diffsx = np.array([0, np.diff(x)[0]]+list(diffsx))
-            diffsx = np.cumsum(diffsx)
-            xbins = x[0]-np.diff(x)[0]/2 + diffsx
+                # Define the new bins to be as wide as the sum of half the upper
+                # and lower difference between neighboring points.
+                # if [a, b, c, d], then pixel b would span from
+                # b-(b-a)/2 to b+ (c-b)/2
+                # This mimics origin's methods
+                # First pixel is set as wide as the difference between
+                # the first and second pixel
+                diffsx = np.diff(x)[:-1]/2+np.diff(x)[1:]/2
+                diffsx = np.array([0, np.diff(x)[0]]+list(diffsx))
+                diffsx = np.cumsum(diffsx)
+                xbins = x[0]-np.diff(x)[0]/2 + diffsx
 
-            diffsy = np.diff(y)[:-1] / 2 + np.diff(y)[1:] / 2
-            diffsy = np.array([0, np.diff(y)[0]] + list(diffsy))
-            diffsy = np.cumsum(diffsy)
-            ybins = y[0] - np.diff(y)[0] / 2 + diffsy
+                diffsy = np.diff(y)[:-1] / 2 + np.diff(y)[1:] / 2
+                diffsy = np.array([0, np.diff(y)[0]] + list(diffsy))
+                diffsy = np.cumsum(diffsy)
+                ybins = y[0] - np.diff(y)[0] / 2 + diffsy
 
-            for ii, xval in enumerate(newX):
-                for jj, yval in enumerate(newY):
-                    try:
-                        oldii = np.where(xval < xbins)[0][0]
-                    except IndexError:
-                        oldii = -1
-                    try:
-                        oldjj = np.where(yval < ybins)[0][0]
-                    except IndexError:
-                        oldjj = -1
-                    newZ[ii, jj] = img[oldii, oldjj]
-            img = newZ
+                for ii, xval in enumerate(newX):
+                    for jj, yval in enumerate(newY):
+                        try:
+                            oldii = np.where(xval < xbins)[0][0]
+                        except IndexError:
+                            oldii = -1
+                        try:
+                            oldjj = np.where(yval < ybins)[0][0]
+                        except IndexError:
+                            oldjj = -1
+                        newZ[ii, jj] = img[oldii, oldjj]
+                img = newZ
+            else:
+                newX, newY = x, y
 
             if kwargs.get("scale", None) is None:
                 kwargs["scale"] = [(newX.max()-newX.min())/newX.size, (newY.max()-newY.min())/newY.size]
