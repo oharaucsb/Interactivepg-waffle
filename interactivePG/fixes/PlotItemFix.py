@@ -10,7 +10,7 @@ from pyqtgraph import AxisItem
 from pyqtgraph import LabelItem
 from pyqtgraph import WidgetGroup
 from pyqtgraph.graphicsItems.ButtonItem import ButtonItem
-from pyqtgraph.graphicsItems.PlotItem.plotConfigTemplate_pyqt import Ui_Form
+from pyqtgraph.graphicsItems.PlotItem.plotConfigTemplate_pyqt5 import Ui_Form
 import pyqtgraph.functions as fn
 import os
 

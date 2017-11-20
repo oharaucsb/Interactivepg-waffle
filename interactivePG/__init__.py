@@ -58,6 +58,25 @@ def plot(*args, **kwargs):
     plt.plot(*args, **kwargs)
     return plt
 
+def brazilPlot(*args, **kwargs):
+    global qApp, plotList
+    if qApp is None:
+        qApp = QtGui.QApplication([])
+    try:
+        if not kwargs.pop("newFigure", False):
+            plt = plotList["__LAST_FIG"]
+        else:
+            raise IndexError()
+    except KeyError:
+        plt = figure()
+    if 'label' in kwargs:
+        kwargs['name'] = kwargs['label']
+    if 'name' in kwargs:
+        legend()
+
+    plt.brazilPlot(*args, **kwargs)
+    return plt
+
 def errorbar(*args, **kwargs):
     global qApp, plotList
     if qApp is None:

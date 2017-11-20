@@ -162,6 +162,104 @@ class ClickablePlotWidget(pg.PlotWidget):
         self.setItemClickable(p)
         return p
 
+    def brazilPlot(self,*args, **kwargs):
+        """
+        Pass an nx3 as first arg, or kwargs data:
+            Plot d[:,0]vs d[:,1]+d[:,2] :: d[:,1]-d[:,2]
+        Pass two Nx2
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        data = kwargs.pop("data", None)
+        data1 = kwargs.pop("data1", None)
+        data2 = kwargs.pop("data2", None)
+        args = list(args)
+
+        if None is data1 or None is data2 or None is data:
+            # Assume it's in the *args... Figure out how
+            # many numpy arrays there are.
+            numnp = [ii for ii in args if type(ii) is np.ndarray]
+            if len(numnp) == 0:
+                raise RuntimeError("I don't know what to plot")
+            if len(numnp) == 1:
+                # Follow it down to below parsing
+                if args[0].shape[1] in [3, ]:
+                    data = args[0]
+                    args.pop(0)
+            if len(numnp) == 2:
+                if args[0].shape[1] == 2 and args[1].shape[1] == 2:
+                    data1 = args[0]
+                    data2 = args[1]
+                    args.pop(1)
+                    args.pop(0)
+                elif args[0].shape[1] == 1 and args[1].shape[1] == 2:
+                    # args[0] is x,
+                    # args[1] is [y1, y2]
+                    data1 = np.column_stack((args[0], args[1][:, 0]))
+                    data2 = np.column_stack((args[0], args[1][:, 1]))
+                    args.pop(1)
+                    args.pop(0)
+            if len(numnp) == 3:
+                if args[0].ndim == 1 and args[1].ndim == 1 and args[2].ndim == 1:
+                    data = np.column_stack((args[0], args[1], args[2]))
+                    args.pop(2)
+                    args.pop(1)
+                    args.pop(0)
+
+
+
+
+        if data is not None:
+            # either Nx3 or Nx4?
+            # Is Nx3 [x, y1, y2], or [x, y, yerr]? need a flag?
+            # I'm gonna assume the later cause that's how I'd use it...
+            if data.shape[1] == 3:
+                data1 = np.column_stack((data[:, 0], data[:, 1] + data[:, 2]))
+                data2 = np.column_stack((data[:, 0], data[:, 1] - data[:, 2]))
+            else:
+                raise RuntimeError("Not sure how to parse this brazil input: {}".format(data.shape))
+
+
+        aargs, kkwargs = getPlotPens(self, *args, **kwargs)
+        kwargs.update(kkwargs)
+        args = aargs
+
+        c1 = pg.PlotDataItem(data1, *args, **kwargs)
+        c2 = pg.PlotDataItem(data2, *args, **kwargs)
+        c1.hide()
+        c2.hide()
+        # c1 = self.plot(data1, *args, **kwargs)
+        # c2 = self.plot(data2, *args, **kwargs)
+        kwargs.pop("symbolPen") #not used in fillbetween
+        kwargs.pop("symbolBrush")  # not used in fillbetween
+        kwargs.pop("symbol")  # not used in fillbetween
+        brush = kwargs.pop("brush", None)
+        if brush is None:
+            color = kwargs.get("pen").color()
+
+            alpha = kwargs.pop("alpha", None)
+            if alpha is None:
+                alpha = 0.5
+            color.setAlphaF(alpha)
+
+            brush = pg.mkBrush(color)
+            kwargs["brush"] = brush
+            # kwargs["pen"] = pg.mkPen(color)
+        kwargs["pen"] = None
+        fill = pg.FillBetweenItem(c1, c2, **kwargs)
+        # p = self.plotItem.plot(*args, **kwargs)
+        # self.setItemClickable(p)
+        self.plotItem.addItem(fill)
+        # self.setItemClickable(c1)
+        # self.setItemClickable(c2)
+        # self.plotItem.addItem(c1)
+        # self.plotItem.addItem(c2)
+
+        return fill
+
+
     def errorbars(self, *args, **kwargs):
         """
         create and add an errordataitem
