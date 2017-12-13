@@ -20,6 +20,10 @@ Gradients["rgbSpec"] = {'ticks': [
             ], 'mode': 'rgb'}
 
 
+class FakePlotWidget(object):
+    # stupid hackey way to get this to play nice with the plot container
+    pass
+
 class ImageViewWithPlotItemContainer(pg.ImageView):
     """
     I make all my uis with Qt Designer.
@@ -43,6 +47,11 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
     """
     def __init__(self, *args, **kwargs):
         kwargs["view"] = pg.PlotItem()
+
+
+        self.plotWidget = FakePlotWidget()
+        self.plotWidget.plotItem = kwargs["view"]
+
         super(ImageViewWithPlotItemContainer, self).__init__(*args, **kwargs)
         self.timeLine.setPen(pg.mkPen('k'))
 
@@ -92,6 +101,7 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
         img = img.copy()
         x, y = kwargs.pop('x', None), kwargs.pop('y', None)
         if x is not None and y is not None:
+            x, y = np.array(x), np.array(y)
             if kwargs.pop("unequalSpacings", False):
                 # adjust the img vector to account forunequal spacings
                 newX = np.arange(x.min(), x.max(), np.diff(x).min() / 3.)
@@ -164,8 +174,8 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
                     # setting the axes as above
 
                     img = img[None,:,:]
-        cmap = kwargs.pop("cmap", None)
-        print("plot args", args, kwargs)
+        cmap = kwargs.pop("cmap", "rgbSpec")
+        # print("plot args", args, kwargs)
         super(ImageViewWithPlotItemContainer, self).setImage(img, *args, **kwargs)
         if cmap is not None:
             self.ui.histogram.item.gradient.loadPreset(cmap)
@@ -186,3 +196,9 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
         data = self.roi.getArrayRegion(image.view(np.ndarray), self.imageItem, axes)[0]
 
         self.roiCurve.setData(y=data)
+
+    def xlim(self, xmin=None, xmax=None):
+        self.view.setXRange(xmin, xmax, padding=0)
+
+    def ylim(self, ymin=None, ymax=None):
+        self.view.setYRange(ymin, ymax, padding=0)
