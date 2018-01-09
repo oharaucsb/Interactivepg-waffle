@@ -38,6 +38,9 @@ def image(*args, **kwargs):
     img.destroyed.connect(imageDestroyed)
     img.show()
     imageList.append(img)
+
+    # how much does shit break with this?
+    plotList["__LAST_FIG"] = img
     return img
 
 def plot(*args, **kwargs):
@@ -56,6 +59,69 @@ def plot(*args, **kwargs):
     if 'name' in kwargs:
         legend()
     plt.plot(*args, **kwargs)
+    return plt
+
+def plotxyy(*args, **kwargs):
+    """
+    Helper function for passing an x and multiple y curves
+    Currently accepts plotxyy(x, y[:,N]) or plot(data[:,N))
+    where x:= data[:,0] and y[N-1]:= data[:,1:N]
+
+    pass kwarg "names" (NOT "name") to give the plots names.
+
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    global qApp, plotList
+    if qApp is None:
+        qApp = QtGui.QApplication([])
+    try:
+        if not kwargs.pop("newFigure", False):
+            plt = plotList["__LAST_FIG"]
+        else:
+            raise IndexError()
+    except KeyError:
+        plt = figure()
+    if 'label' in kwargs:
+        kwargs['name'] = kwargs['label']
+    if 'name' in kwargs:
+        legend()
+
+    aargs = list(args)
+    numnp = 0
+    for arg in aargs:
+        if isinstance(arg, np.ndarray) or isinstance(arg, list):
+            numnp += 1
+        else:
+            break
+    if numnp == 0:
+        raise RuntimeError("Should be passing np.ndarray or list, got {}".format(type(arg[0])))
+    if numnp == 1:
+        datum = aargs.pop(0)
+        x = datum[:,0]
+        y = datum[:,1:]
+    elif numnp == 2:
+        x = aargs.pop(0)
+        y = aargs.pop(0)
+    else:
+        x = aargs.pop(0)
+        # Need to pop(1), not pop(ii) because otherwise it will pop an index, and use
+        # the modified list for future pops, resulting in taking every-other item,
+        # instead of sequential items.
+        y = [aargs.pop(0) for ii in range(numnp-1)]
+
+    args = tuple(aargs)
+    # Need to transpose it to take slices along columns, not along rows
+    y = np.array(y)
+    names = kwargs.pop("names", None)
+    if names is None:
+        names = [None] * y.shape[1]
+    else:
+        legend()
+
+    for idx, ydata in enumerate(y.T):
+        plt.plot(x, ydata, *args, name=names[idx], **kwargs)
     return plt
 
 def brazilPlot(*args, **kwargs):
