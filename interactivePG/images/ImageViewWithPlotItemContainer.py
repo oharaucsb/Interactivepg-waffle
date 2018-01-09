@@ -42,7 +42,8 @@ class ImageViewWithPlotItemContainer(pg.ImageView):
 
     """
     def __init__(self, *args, **kwargs):
-        kwargs["view"] = pg.PlotItem()
+        if kwargs.get("view", None) is None:
+            kwargs["view"] = pg.PlotItem()
         super(ImageViewWithPlotItemContainer, self).__init__(*args, **kwargs)
         self.timeLine.setPen(pg.mkPen('k'))
 
