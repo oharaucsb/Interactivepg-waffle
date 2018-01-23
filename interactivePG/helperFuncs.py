@@ -57,12 +57,15 @@ def plotArgsParser(*args):
         settingDict.update(pens)
         # args.remove(arg)
         # remove it from the args list
+
         del args[idx]
         break
     return tuple(args), settingDict
 
-def getPlotPens(pw, *args, **kwargs):
+def getPlotPens(*args, **kwargs):
+
     kwargs = kwargs.copy()
+    pw = kwargs.pop("pw", None)
     if 'marker' in kwargs:
         kwargs["symbol"] = kwargs.pop('marker')
     pen = kwargs.get('pen', None)
@@ -84,17 +87,23 @@ def getPlotPens(pw, *args, **kwargs):
 
         color = kwargs.get("color", None)
         if color is None:
-            if isinstance(config_options["standardColors"], int):
-                idx = len(pw.plotItem.curves) % numCols
-                color = pg.intColor(idx, config_options["standardColors"])
+            if pw is None:
+                color = 'b'
             else:
-                idx = len(pw.plotItem.curves) % numCols
-                color = config_options["standardColors"][idx]
+                if isinstance(config_options["standardColors"], int):
+                    idx = len(pw.plotItem.curves) % numCols
+                    color = pg.intColor(idx, config_options["standardColors"])
+                else:
+                    idx = len(pw.plotItem.curves) % numCols
+                    color = config_options["standardColors"][idx]
 
         style = kwargs.pop('style', None)
         if style is None:
-            idx = (len(pw.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
-            style = idx
+            if pw is None:
+                style = '-'
+            else:
+                idx = (len(pw.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
+                style = idx
         else:
             # pass int and use the qt pen value for it
             # otherwise, parse it.

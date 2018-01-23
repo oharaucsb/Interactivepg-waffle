@@ -4,7 +4,8 @@ import numpy as np
 import sys
 from PyQt5 import QtCore, QtGui
 from .clickablePlotSettings_ui import Ui_LineSettingsDialog
-
+from ..packageSettings import config_options
+from ..helperFuncs import *
 
 
 class PlotDataErrorItem(pg.PlotDataItem):
@@ -19,6 +20,52 @@ class PlotDataErrorItem(pg.PlotDataItem):
     be a huge headache to work around if you don't subclass.
     """
     def __init__(self, *args, **kwargs):
+        """
+        create and add an errordataitem
+
+        errorbars(<xdata>, <ydata>, <error>, *kwargs)
+        errorbars(<ydata>, <errors>, **kwargs) to assume
+            x as an index
+        errorbars(x=<xdata>, y=<ydata>, errorbars=<errors>, **kwargs)
+        errorbars(Nx(2, 3), **kwargs) to unpack as
+            x, y, yerr
+
+        kwargs:
+        capWidth: widths of bar caps
+        """
+
+        aargs, kkwargs = getPlotPens(*args, **kwargs)
+        kwargs.update(kkwargs)
+        args = aargs
+
+        if len(args) == 2:
+            kwargs.update(y=args[0])
+            kwargs.update(errorbars=args[1])
+        elif len(args) == 3:
+            kwargs.update(x=args[0])
+            kwargs.update(y=args[1])
+            kwargs.update(errorbars=args[2])
+        elif len(args) == 1 and isinstance(args[0], np.ndarray):
+            if args[0].shape[1] == 2:
+                kwargs.update(y=args[0][:, 0])
+                kwargs.update(errorbars=args[0][:, 1])
+            elif args[0].shape[1] == 3:
+                kwargs.update(x=args[0][:, 0])
+                kwargs.update(y=args[0][:, 1])
+                kwargs.update(errorbars=args[0][:, 2])
+            else:
+                raise RuntimeError("I do not know how to parse this np.ndarray")
+        elif len(args) == 1:
+            raise RuntimeError("I do not know how to parse this argument", args)
+
+        assert 'y' in kwargs
+        assert 'errorbars' in kwargs
+
+        if 'capWidth' not in kwargs:
+            kwargs['capWidth'] = config_options["errorBarCapWidth"]
+        kwargs['beam'] = kwargs.pop('capWidth')
+
+        args, kwargs = getPlotPens(self, *args, **kwargs)
         self.errorbars = pg.ErrorBarItem(**kwargs)
         super(PlotDataErrorItem, self).__init__(*args, **kwargs)
         self.errorbars.setParentItem(self)

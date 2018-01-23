@@ -64,6 +64,11 @@ class ClickablePlotWidget(pg.PlotWidget):
                                   "dataCrosshairsIdx": 0,
                                   "dataCrosshairsSource": 0}
 
+        # Map these up here so I don't need to constantly figure out
+        # how to add on to the contet menu of the view
+        self.addContextMenu = self.plotItem.vb.menu.addMenu
+        self.addContextAction = self.plotItem.vb.menu.addAction
+
         # set up a timer to tell when you've double
         # clicked a
         self.doubleClickTimer = QtCore.QTimer()
@@ -155,7 +160,7 @@ class ClickablePlotWidget(pg.PlotWidget):
             pg.ImageView
 
     def plot(self, *args, **kwargs):
-        aargs, kkwargs = getPlotPens(self, *args, **kwargs)
+        aargs, kkwargs = getPlotPens(pw=self, *args, **kwargs)
         kwargs.update(kkwargs)
         args = aargs
         p = self.plotItem.plot(*args, **kwargs)
@@ -261,54 +266,54 @@ class ClickablePlotWidget(pg.PlotWidget):
 
 
     def errorbars(self, *args, **kwargs):
-        """
-        create and add an errordataitem
-
-        errorbars(<xdata>, <ydata>, <error>, *kwargs)
-        errorbars(<ydata>, <errors>, **kwargs) to assume
-            x as an index
-        errorbars(x=<xdata>, y=<ydata>, errorbars=<errors>, **kwargs)
-        errorbars(Nx(2, 3), **kwargs) to unpack as
-            x, y, yerr
-
-        kwargs:
-        capWidth: widths of bar caps
-        """
-
-        aargs, kkwargs = getPlotPens(self, *args, **kwargs)
-        kwargs.update(kkwargs)
-        args = aargs
-
-
-        if len(args)==2:
-            kwargs.update(y=args[0])
-            kwargs.update(errorbars=args[1])
-        elif len(args)==3:
-            kwargs.update(x=args[0])
-            kwargs.update(y=args[1])
-            kwargs.update(errorbars=args[2])
-        elif len(args) == 1 and isinstance(args[0], np.ndarray):
-            if args[0].shape[1] == 2:
-                kwargs.update(y=args[0][:,0])
-                kwargs.update(errorbars=args[0][:,1])
-            elif args[0].shape[1] == 3:
-                kwargs.update(x=args[0][:,0])
-                kwargs.update(y=args[0][:,1])
-                kwargs.update(errorbars=args[0][:,2])
-            else:
-                raise RuntimeError("I do not know how to parse this np.ndarray")
-        elif len(args)==1:
-            raise RuntimeError("I do not know how to parse this argument", args)
-
-        assert 'y' in kwargs
-        assert 'errorbars' in kwargs
-
-        if 'capWidth' not in kwargs:
-            kwargs['capWidth'] = config_options["errorBarCapWidth"]
-        kwargs['beam'] = kwargs.pop('capWidth')
-
-        args, kwargs = getPlotPens(self, *args, **kwargs)
-        erroritem = PlotDataErrorItem(**kwargs)
+        # """
+        # create and add an errordataitem
+        #
+        # errorbars(<xdata>, <ydata>, <error>, *kwargs)
+        # errorbars(<ydata>, <errors>, **kwargs) to assume
+        #     x as an index
+        # errorbars(x=<xdata>, y=<ydata>, errorbars=<errors>, **kwargs)
+        # errorbars(Nx(2, 3), **kwargs) to unpack as
+        #     x, y, yerr
+        #
+        # kwargs:
+        # capWidth: widths of bar caps
+        # """
+        #
+        # aargs, kkwargs = getPlotPens(self, *args, **kwargs)
+        # kwargs.update(kkwargs)
+        # args = aargs
+        #
+        #
+        # if len(args)==2:
+        #     kwargs.update(y=args[0])
+        #     kwargs.update(errorbars=args[1])
+        # elif len(args)==3:
+        #     kwargs.update(x=args[0])
+        #     kwargs.update(y=args[1])
+        #     kwargs.update(errorbars=args[2])
+        # elif len(args) == 1 and isinstance(args[0], np.ndarray):
+        #     if args[0].shape[1] == 2:
+        #         kwargs.update(y=args[0][:,0])
+        #         kwargs.update(errorbars=args[0][:,1])
+        #     elif args[0].shape[1] == 3:
+        #         kwargs.update(x=args[0][:,0])
+        #         kwargs.update(y=args[0][:,1])
+        #         kwargs.update(errorbars=args[0][:,2])
+        #     else:
+        #         raise RuntimeError("I do not know how to parse this np.ndarray")
+        # elif len(args)==1:
+        #     raise RuntimeError("I do not know how to parse this argument", args)
+        #
+        # assert 'y' in kwargs
+        # assert 'errorbars' in kwargs
+        #
+        # if 'capWidth' not in kwargs:
+        #     kwargs['capWidth'] = config_options["errorBarCapWidth"]
+        # kwargs['beam'] = kwargs.pop('capWidth')
+        #
+        # args, kwargs = getPlotPens(self, *args, **kwargs)
+        erroritem = PlotDataErrorItem(pw = self, *args, **kwargs)
 
         self.addItem(erroritem)
         self.setItemClickable(erroritem)

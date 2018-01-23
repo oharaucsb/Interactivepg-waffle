@@ -299,6 +299,16 @@ def addLine(*args, **kwargs):
     curPlot.plotWidget.getPlotItem().addItem(line)
     return line
 
+def getPreviousPen():
+    """
+    Returns the QPen which was used in the last plot
+    Doesn't do symbols, though could and should,
+    since it's all kept in the dataitem opts
+    :return:
+    """
+    plotWin = gcf()
+    return plotWin.plotWidget.plotItem.dataItems[-1].opts["pen"]
+
 def gcf():
     return plotList["__LAST_FIG"]
     return plotList.get("__LAST_FIG", None)
