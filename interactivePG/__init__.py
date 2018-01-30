@@ -306,9 +306,55 @@ def getPreviousPen():
     since it's all kept in the dataitem opts
     :return:
     """
+    # plotWin = gcf()
+    # return plotWin.plotWidget.plotItem.dataItems[-1]
+    try:
+        return gcc().opts["pen"]
+    except AttributeError:
+        # what is the best case here? Pass an empty pen?
+        # pass none, and let the user handle it?
+        # Define my own default pen in the settings, sicne
+        # I think this would give no curve if plotted with
+        return QtGui.QPen()
+
+def gcc():
+    """getCurrentCurve
+
+    Get the last curve that was added to the plot
+
+    :return: The last curve
+    :rtype: pg.PlotDataItem
+    """
     plotWin = gcf()
-    return plotWin.plotWidget.plotItem.dataItems[-1].opts["pen"]
+    try:
+        return plotWin.plotWidget.plotItem.dataItems[-1]
+    except IndexError:
+        return None
 
 def gcf():
     return plotList["__LAST_FIG"]
     return plotList.get("__LAST_FIG", None)
+
+def exportImage(plotObject, **kwargs):
+    """
+    Occassionally I want to save/export images from pyqtgraph, and it's easier to do
+    programatically isntead of right clicking, etc.
+
+    I'm dumping this here so I know the rough steps and can expand on it
+    as I need it
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    from pyqtgraph.exporters import ImageExporter as E
+    if isinstance(plotObject, pg.GraphicsScene):
+        scene = plotObject
+    elif isinstance(plotObject, PlotContainerWindow):
+        scene = plotObject.plotWidget.plotItem.scene()
+    else:
+        print("I need a scene")
+
+    e = E(scene)
+
+    # e.export(copy=True)
+    e.export(**kwargs)
