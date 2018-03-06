@@ -225,6 +225,50 @@ def ylabel(text=None, units=None):
         return
     plt.plotWidget.plotItem.setLabel("left", text=text, units=units)
 
+def xticks(*args, **kwargs):
+    """
+    Set the tick spacing for the x.
+    xticks(x1) sets the major/minor tick spacing to
+    x1.
+    xticks(x1, x2) sets the major/min spacing to x1/x2, resp.
+    xticks([spacings]) gets passed to pyqtgraph.AxisItem.setTicks
+
+    pass kwargs["applyBoth"] = False to prevent it from defaulting
+    to applying the same characteristic for both sides
+    :return:
+    """
+    fig = gcf()
+    if fig is None: return
+    axes = [fig.plotItem.axes["bottom"]["item"]]
+    if kwargs.pop("applyBoth", True):
+        axes.append(fig.plotItem.axes["top"]["item"])
+
+    if len(args) == 1:
+        if isinstance(args[0], int):
+            for ax in axes:
+                ax.setTickSpacing(args[0])
+        else:
+            for ax in axes:
+                ax.setTicks(args[0])
+    elif len(args)==2:
+        for ax in axes:
+            ax.setTickSpacing(args[0], args[1])
+
+def yticks(*args, **kwargs):
+    fig = gcf()
+    if fig is None: return
+    axes = [fig.plotItem.axes["left"]["item"]]
+    if kwargs.pop("applyBoth", True):
+        axes.append(fig.plotItem.axes["right"]["item"])
+
+    if len(args) == 1:
+        for ax in axes:
+            ax.setTickSpacing(args[0], args[0])
+    else:
+        for ax in axes:
+            ax.setTicks(args)
+
+
 def title(text=None, **kwargs):
     try:
         plt = plotList["__LAST_FIG"]
@@ -264,6 +308,24 @@ def plotDestroyed(plotWidget):
 def imageDestroyed(*args, **kwargs):
     print(("Image destroyed", args, kwargs))
 
+def infiniteLine(*args, **kwargs):
+    """
+    convenience function to add an infinite line to a plot
+    all args are passed to pyqtgraph.InfiniteLine
+
+    Override to set the default pen. Should I do this?
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    if kwargs.get("pen", None) is None:
+        kwargs["pen"] = pg.mkPen(config_options["infiniteLinePen"])
+    line = pg.InfiniteLine(*args, **kwargs)
+    fig = gcf()
+    if fig is None: return
+    fig.plotWidget.addItem(line)
+    return line
+
 def figure(*args, **kwargs):
     global qApp, plotList
     if qApp is None:
@@ -293,12 +355,6 @@ def figure(*args, **kwargs):
 
     return plt
 
-def addLine(*args, **kwargs):
-    line = pg.InfiniteLine(*args, **kwargs)
-    curPlot = gcf()
-    curPlot.plotWidget.getPlotItem().addItem(line)
-    return line
-
 def getPreviousPen():
     """
     Returns the QPen which was used in the last plot
@@ -318,9 +374,10 @@ def getPreviousPen():
         return QtGui.QPen()
 
 def gcc():
-    """getCurrentCurve
+    """
+    getCurrentCurve
 
-    Get the last curve that was added to the plot
+    Get the last curve that was added to the  last plot plot
 
     :return: The last curve
     :rtype: pg.PlotDataItem
@@ -332,8 +389,66 @@ def gcc():
         return None
 
 def gcf():
+    """
+    Pop the last figure from the list.
+
+    I don't 100% like how this is done, but I'm not sure of a better way at the moment
+    :return:
+    :rtype: ClickablePlotWidget
+    """
     return plotList["__LAST_FIG"]
     return plotList.get("__LAST_FIG", None)
+
+
+def gca(which="b"):
+    """
+    getCurrentAxes
+
+    return the last axes.
+    kwarg <which> specifies which axis (axes) to return:
+       "b" bottom
+       "t" top
+       "l" left
+       "r" right
+      Chain them together to return multiple ones
+       which = "tb"
+      for both top and bottom axes
+
+    :return: The specified axis. If multiple requested, return a list
+       note: is it better to return a dict? Should the list order
+       be the same as the input <which>'s order?
+    :rtype: pg.AxisItem
+    """
+    if which.lower() == "bottom":
+        which = "b"
+    elif which.lower() == "top":
+        which = "t"
+    elif which.lower() == "left":
+        which = "l"
+    elif which.lower() == "right":
+        which = "r"
+
+    if len(which)>4:
+        raise RuntimeError("Invalid axes request, should pass <b|t|l|r>, got {}".format(which))
+    plotWin = gcf()
+    if plotWin is None:
+        return
+    axesList = plotWin.plotItem.axes
+    returnAxes = []
+    which = which.lower()
+
+    if "b" in which:
+        returnAxes.append(axesList["bottom"]["item"])
+    if "t" in which:
+        returnAxes.append(axesList["top"]["item"])
+    if "l" in which:
+        returnAxes.append(axesList["left"]["item"])
+    if "r" in which:
+        returnAxes.append(axesList["right"]["item"])
+
+    if len(returnAxes) == 1:
+        return returnAxes[0]
+    return returnAxes
 
 def exportImage(plotObject, **kwargs):
     """

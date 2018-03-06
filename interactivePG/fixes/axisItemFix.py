@@ -17,6 +17,9 @@ class AxisSettingsDialog(QtGui.QDialog):
         self.initialSettings = {
             "visible":self.axisItem.isVisible(),
             "title": self.axisItem.labelText,
+            ## TODO: The font stuff needs updating. This size thing doesn't work
+            ## anymore since I've been emssing around below with setting fonts
+            ## for the label independent of the ticks
             "size": self.axisItem.labelStyle.get("font-size","10pt").split("pt")[0],
             "from": self.axisItem.range[0],
             "to": self.axisItem.range[1],
@@ -67,8 +70,8 @@ class AxisSettingsDialog(QtGui.QDialog):
         self.ui.cbVisible.setChecked(self.initialSettings["visible"])
         self.ui.tTitle.setText("{}".format(self.initialSettings["title"]))
         self.ui.sbSize.setValue(int(self.initialSettings["size"]))
-        self.ui.tFrom.setText("{}".format(self.initialSettings["from"]))
-        self.ui.tTo.setText("{}".format(self.initialSettings["to"]))
+        self.ui.tFrom.setText("{:.6g}".format(self.initialSettings["from"]))
+        self.ui.tTo.setText("{:.6g}".format(self.initialSettings["to"]))
         self.ui.cbMode.setCurrentIndex(self.initialSettings["type"])
         self.ui.tMajSpacing.setText("{}".format(self.initialSettings["majSpac"]))
         self.ui.tMinSpacing.setText("{}".format(self.initialSettings["minSpac"]))
@@ -329,10 +332,34 @@ def drawPicture(self, p, axisSpec, tickSpecs, textSpecs):
         # p.drawRect(rect)
     # profiler('draw text')
 
+def setLabelFont(self, *args, **kwargs):
+    """
+    pyqtgraph's AxisItem doesn't have a method for easily setting
+    the label font ( you have to manually go down a level). That's silly to me
+    so I'll add it in here. All args passed to QFont
+
+    pyqtgraph does some stupid shit combining QFonts for the tick text,
+    but HTML for the label text. That's why there's the obnoxious shit
+    here with font size
+
+    :param self:
+    :param font:
+    :return:
+    """
+    font = QtGui.QFont(*args, **kwargs)
+    size = int(font.pointSize())
+    if size!=-1:
+        self.labelStyle["font-size"] = str(size)+"pt"
+    self.label.setFont(font)
+    return font
+
+
 pyqtgraph.AxisItem.generateDrawSpecs = newDrawSpecs
 pyqtgraph.AxisItem.__init__ = __init__
 pyqtgraph.AxisItem.mouseClickEvent = mouseClickEvent
 pyqtgraph.AxisItem.logTickStrings = logTickStrings
+pyqtgraph.AxisItem.setLabelFont = setLabelFont
+
 # pyqtgraph.AxisItem.drawPicture = drawPicture
 
 

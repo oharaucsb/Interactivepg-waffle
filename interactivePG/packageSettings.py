@@ -1,5 +1,5 @@
 import itertools as itt
-from pyqtgraph import intColor
+from pyqtgraph import mkPen
 
 
 config_options = {
@@ -23,5 +23,6 @@ config_options = {
     "linestyleChars": ['_', '-', '--', '.', '-.', '-..'], # characeter codes used for passing
                     #string to specify line style
     "linewidth": 3,
-    "errorBarCapWidth": 0.0
+    "errorBarCapWidth": 0.0,
+    "infiniteLinePen": mkPen('s', width=2)
 }

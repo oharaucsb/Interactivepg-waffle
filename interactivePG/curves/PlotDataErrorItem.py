@@ -65,6 +65,9 @@ class PlotDataErrorItem(pg.PlotDataItem):
             kwargs['capWidth'] = config_options["errorBarCapWidth"]
         kwargs['beam'] = kwargs.pop('capWidth')
 
+        if "label" in kwargs:
+            kwargs["name"] = kwargs.pop("label")
+
         args, kwargs = getPlotPens(self, *args, **kwargs)
         self.errorbars = pg.ErrorBarItem(**kwargs)
         super(PlotDataErrorItem, self).__init__(*args, **kwargs)
