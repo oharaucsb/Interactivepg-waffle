@@ -125,6 +125,8 @@ def getPlotPens(*args, **kwargs):
             kwargs["symbol"] = None
 
 
+        if "width" in kwargs:
+            kwargs["linewidth"] = kwargs.pop("width")
         width = kwargs.get('linewidth', config_options["linewidth"])
 
         pen.setColor(pg.mkColor(color))

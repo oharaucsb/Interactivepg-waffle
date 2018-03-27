@@ -2,7 +2,9 @@ import numpy as np
 import pyqtgraph as pg
 from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContainer
 from .curves.clickablePlotWidget import ClickablePlotWidget
-from PyQt5 import QtCore, QtGui
+from .widgets.LabviewSlider import LabviewSlider as LS
+
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class BaseIcon(QtGui.QIcon):
@@ -198,8 +200,89 @@ class PlotContainerWindow(QtGui.QMainWindow):
     def maximize(self):
         self.showMaximized()
 
+class ManipulateWindow(QtGui.QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(ManipulateWindow, self).__init__()
+        centralWid = QtWidgets.QWidget()
+
+        layout = QtWidgets.QVBoxLayout(self)
+
+        self._manipulatorLayout = QtWidgets.QGridLayout()
+        layout.addLayout(self._manipulatorLayout)
+
+        self._plotWindow = PlotContainerWindow()
+
+        # keep a list f the current items so we have a reference to which curves should
+        # be updated
+        self._updateCurves = self._plotWindow.plotWidget.plotItem.curves.copy()
 
 
+        layout.addWidget(self._plotWindow)
+
+        centralWid.setLayout(layout)
+        self.setCentralWidget(centralWid)
+
+        self._callBack = None
+
+
+
+    def setManipulators(self, manipulations):
+
+        ## TODO: clear the layout? Or assume this only gets
+        ## set once per instance?
+        if manipulations is None: return
+
+        self._updateCurves = self._plotWindow.plotWidget.plotItem.curves.copy()
+
+
+        if callable(manipulations[0]):
+            self.setCallable(manipulations.pop(0)) # send it off to be the callbac,
+
+
+        for idx, (lbl, bnds) in enumerate(manipulations):
+            self._manipulatorLayout.addWidget(QtWidgets.QLabel(lbl), idx, 0)
+            slider = LS(range = bnds[:2])
+            if len(bnds)==3:
+                slider.setValue(bnds[2])
+            slider.sigValueChanging.connect(self.recalculate)
+            self._manipulatorLayout.addWidget(slider, idx, 1)
+
+
+
+    def setCallable(self, callback):
+        """
+        callback function
+        :param callback:
+        :return:
+        """
+        self._callBack = callback
+
+    def recalculate(self):
+        if self._callBack is None: return
+        rc = self._manipulatorLayout.rowCount()
+        callVals = []
+        for idx in range(rc):
+            callVals.append(
+                self._manipulatorLayout.itemAtPosition(idx, 1).widget().value()
+            )
+        ret = self._callBack(*callVals)
+
+
+        if len(self._updateCurves) != len(ret)-1:
+            raise RuntimeError("Error, mismatch in curves to update and callback function return")
+
+        for idx, curve in enumerate(self._updateCurves):
+            curve.setData(ret[0], ret[idx+1])
+
+
+
+
+    def __getattr__(self, item):
+        try:
+            return getattr(self._plotWindow, item)
+        except Exception as e:
+            print(("Does it not work like this?", item, e, self._plotWindow))
+            print((hasattr(self._plotWindow, item)))
 
 
 

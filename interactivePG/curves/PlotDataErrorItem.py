@@ -53,6 +53,8 @@ class PlotDataErrorItem(pg.PlotDataItem):
                 kwargs.update(x=args[0][:, 0])
                 kwargs.update(y=args[0][:, 1])
                 kwargs.update(errorbars=args[0][:, 2])
+                args = list(args)
+                args[0]=args[0][:, :2]
             else:
                 raise RuntimeError("I do not know how to parse this np.ndarray")
         elif len(args) == 1:
@@ -68,7 +70,12 @@ class PlotDataErrorItem(pg.PlotDataItem):
         if "label" in kwargs:
             kwargs["name"] = kwargs.pop("label")
 
-        args, kwargs = getPlotPens(self, *args, **kwargs)
+
+        ## 3/21/18
+        ## I changed this argument call. It was throwing errors on
+        ## passing an Nx3 np array.
+        # args, kwargs = getPlotPens(self, *args, **kwargs)
+        args, kwargs = getPlotPens(*args, **kwargs)
         self.errorbars = pg.ErrorBarItem(**kwargs)
         super(PlotDataErrorItem, self).__init__(*args, **kwargs)
         self.errorbars.setParentItem(self)

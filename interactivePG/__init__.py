@@ -11,8 +11,12 @@ import pyqtgraph as pg
 from .packageSettings import config_options
 from .images.imagePlot import image as ipimage
 from .curves.clickablePlotWidget import ClickablePlotWidget as PlotWidget
-from .plotContainerWindow import PlotContainerWindow
+from .curves.PolarizationEllipseItem import PolarizationEllipseItem
+from .plotContainerWindow import PlotContainerWindow, ManipulateWindow
 from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContainer as ImageView
+from .images.PolarImagePlot import PolarImageItem, PolarImagePlot
+from .widgets.DelayEditor import DelayTimeEditor
+from .widgets.LabviewSlider import LabviewSlider
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])
 
@@ -268,7 +272,6 @@ def yticks(*args, **kwargs):
         for ax in axes:
             ax.setTicks(args)
 
-
 def title(text=None, **kwargs):
     try:
         plt = plotList["__LAST_FIG"]
@@ -399,7 +402,6 @@ def gcf():
     return plotList["__LAST_FIG"]
     return plotList.get("__LAST_FIG", None)
 
-
 def gca(which="b"):
     """
     getCurrentAxes
@@ -466,6 +468,11 @@ def exportImage(plotObject, **kwargs):
         scene = plotObject
     elif isinstance(plotObject, PlotContainerWindow):
         scene = plotObject.plotWidget.plotItem.scene()
+    elif hasattr(plotObject, "scene"):
+        try:
+            scene = plotObject.scene()
+        except TypeError:
+            scene = plotObject.scene
     else:
         print("I need a scene")
 
@@ -473,3 +480,42 @@ def exportImage(plotObject, **kwargs):
 
     # e.export(copy=True)
     e.export(**kwargs)
+
+def dirs(obj, st='', caseSensitive=False):
+    """
+    I very often want to do a search on the results of dir(), so
+    do that more cleanly here
+    :param obj: the object to be dir'd
+    :param st: the strig to search
+    :param caseSensitive: If False, compares .lower() for all, else doesn't
+    :return: The results of dir() which contain st
+    """
+    if caseSensitive:
+        return [ii for ii in dir(obj) if st in ii]
+    return [ii for ii in dir(obj) if st.lower() in ii.lower()]
+
+def manipulate(manipulateArgs, *args, **kwargs):
+    """
+    Make a Mathematica-style manipulate plot with sliders
+    to change the values of a function.
+    :param manipulateArgs:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    global qApp, plotList
+    if qApp is None:
+        qApp = QtGui.QApplication([])
+
+
+    window = ManipulateWindow()
+    window.plot(*args, **kwargs)
+
+
+
+    window.setManipulators(manipulateArgs)
+
+
+    window.show()
+
+    plotList["__LAST_FIG"] = window
