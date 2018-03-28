@@ -4,11 +4,7 @@ from PyQt5 import QtCore, QtGui
 import pyqtgraph.console as pgc
 from .AxisSettings_ui import Ui_AxisSettingsDialog
 
-# pyqtgraph's axis item is slightly broken
-# it doesn't account for the increase
-# in font size of the tick labels
-# which causes them to clip if you want to change
-# those. I intercept them here to fix those
+
 
 class AxisSettingsDialog(QtGui.QDialog):
     def __init__(self, *args, **kwargs):
@@ -70,8 +66,13 @@ class AxisSettingsDialog(QtGui.QDialog):
         self.ui.cbVisible.setChecked(self.initialSettings["visible"])
         self.ui.tTitle.setText("{}".format(self.initialSettings["title"]))
         self.ui.sbSize.setValue(int(self.initialSettings["size"]))
-        self.ui.tFrom.setText("{:.6g}".format(self.initialSettings["from"]))
-        self.ui.tTo.setText("{:.6g}".format(self.initialSettings["to"]))
+
+        # Estimate the precision with which you need to show numbers.
+        mn, mx = self.initialSettings["from"], self.initialSettings["to"]
+        prec = int(np.abs(np.log10((mx-mn)/mn))) + 2
+        fmt = "{:." + "{}".format(prec) + "g}"
+        self.ui.tFrom.setText(fmt.format(self.initialSettings["from"]))
+        self.ui.tTo.setText(fmt.format(self.initialSettings["to"]))
         self.ui.cbMode.setCurrentIndex(self.initialSettings["type"])
         self.ui.tMajSpacing.setText("{}".format(self.initialSettings["majSpac"]))
         self.ui.tMinSpacing.setText("{}".format(self.initialSettings["minSpac"]))
@@ -160,7 +161,17 @@ class AxisSettingsDialog(QtGui.QDialog):
 
 oldDrawSpecs = pyqtgraph.AxisItem.generateDrawSpecs
 def newDrawSpecs(self, p):
-    if False:
+    """
+    pyqtgraph's axis item is slightly broken
+    it doesn't account for the increase
+    in font size of the tick labels
+    which causes them to clip if you want to change
+    those. I intercept them here to fix those
+    :param self:
+    :param p:
+    :return:
+    """
+    if False: ## To make use of code completion stuff...
         self = pyqtgraph.AxisItem
     axisSpec, tickSpecs, textSpecs = oldDrawSpecs(self, p)
     if not self.style["showValues"]:
@@ -282,6 +293,7 @@ def mouseClickEvent(self, ev):
 
         AxisSettingsDialog.makeSettings(axisItem=self)
 
+
 def logReplacer(x):
     # st = st.replace('e','10<sup>')
     # st += "</sup>"
@@ -300,6 +312,18 @@ def logTickStrings(self, values, scale, spacing):
     return ["%0.1g\\"%x+logReplacer(x) for x in 10 ** np.array(values).astype(float)]
 
 def drawPicture(self, p, axisSpec, tickSpecs, textSpecs):
+    """
+    Apparently I've overwritten this to doing things by way
+    of html tagging for controlling the labels.
+    the default things uses QFonts...? Really gotta
+    look into what the standard should be (html/QFonts)
+    :param self:
+    :param p:
+    :param axisSpec:
+    :param tickSpecs:
+    :param textSpecs:
+    :return:
+    """
     # profiler = debug.Profiler()
 
     p.setRenderHint(p.Antialiasing, False)
