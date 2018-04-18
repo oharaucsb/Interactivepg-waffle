@@ -156,8 +156,36 @@ class PlotContainerWindow(QtGui.QMainWindow):
         try:
             return getattr(self.plotWidget, item)
         except Exception as e:
-            print(("Does it not work like this?", item, e, self.plotWidget))
-            print((hasattr(self.plotWidget, item)))
+            pass
+            # print(("Does it not work like this?", item, e, self.plotWidget))
+            # print((hasattr(self.plotWidget, item)))
+
+    def _repr_png_(self):
+        QtGui.QApplication.processEvents()
+        size = self.viewRect().size().toSize()
+        size = self.geometry().size()
+        # size.setHeight(300)
+        print("size", size)
+        try:
+            self.image = QtGui.QImage(size,
+                                QtGui.QImage.Format_RGB32)
+        except Exception as e:
+            print("Exception is ", e)
+        # except AttributeError:
+        #     self._widget.updateGL()
+        #     self.image = self._widget.grabFrameBuffer()
+
+        painter = QtGui.QPainter(self.image)
+        self.render(painter)
+
+        byte_array = QtCore.QByteArray()
+        buffer = QtCore.QBuffer(byte_array)
+        buffer.open(QtCore.QIODevice.ReadWrite)
+        self.image.save(buffer, 'PNG')
+        buffer.close()
+
+        return bytes(byte_array)
+
 
     def updateMousePos(self, pos):
         self.xPosStatus.setText("x={}".format(pos.x()))

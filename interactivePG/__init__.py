@@ -33,11 +33,33 @@ def getKeyFromItem(item, dic):
 
 qApp = None
 
+def _is_ipython():
+    try:
+        # If you're in an interactive ipython/jupyter console,
+        # I don't want to conflict with their kernal, so don't do anything
+        # to createa  new application.
+        get_ipython
+        return True
+    except:
+        return False
+
+def startQApp():
+    global qApp
+    # try:
+    #     # If you're in an interactive ipython/jupyter console,
+    #     # I don't want to conflict with their kernal, so don't do anything
+    #     # to createa  new application.
+    #     get_ipython
+    # except NameError:
+    #     if qApp is None:
+    #         qApp = QtGui.QApplication([])
+    if qApp is None:
+        qApp = QtGui.QApplication([])
+
 
 def image(*args, **kwargs):
     global qApp, imageList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
     img = ipimage(*args, **kwargs)
     img.destroyed.connect(imageDestroyed)
     img.show()
@@ -49,8 +71,7 @@ def image(*args, **kwargs):
 
 def plot(*args, **kwargs):
     global qApp, plotList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
     try:
         if not kwargs.pop("newFigure", False):
             plt = plotList["__LAST_FIG"]
@@ -78,8 +99,7 @@ def plotxyy(*args, **kwargs):
     :return:
     """
     global qApp, plotList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
     try:
         if not kwargs.pop("newFigure", False):
             plt = plotList["__LAST_FIG"]
@@ -130,8 +150,7 @@ def plotxyy(*args, **kwargs):
 
 def brazilPlot(*args, **kwargs):
     global qApp, plotList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
     try:
         if not kwargs.pop("newFigure", False):
             plt = plotList["__LAST_FIG"]
@@ -149,8 +168,7 @@ def brazilPlot(*args, **kwargs):
 
 def errorbar(*args, **kwargs):
     global qApp, plotList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
     try:
         if not kwargs.pop("newFigure", False):
             plt = plotList["__LAST_FIG"]
@@ -295,7 +313,8 @@ def show():
     global qApp, plotList
     if qApp is not None:
         qApp.exec_()
-        qApp = None
+        if not _is_ipython():
+            qApp = None
         plotList = {}
 
 def plotDestroyed(plotWidget):
@@ -331,8 +350,7 @@ def infiniteLine(*args, **kwargs):
 
 def figure(*args, **kwargs):
     global qApp, plotList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
     try:
         name = str(args[0])
     except:
@@ -504,8 +522,7 @@ def manipulate(manipulateArgs, *args, **kwargs):
     :return:
     """
     global qApp, plotList
-    if qApp is None:
-        qApp = QtGui.QApplication([])
+    startQApp()
 
 
     window = ManipulateWindow()
