@@ -17,6 +17,7 @@ from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContaine
 from .images.PolarImagePlot import PolarImageItem, PolarImagePlot
 from .widgets.DelayEditor import DelayTimeEditor
 from .widgets.LabviewSlider import LabviewSlider
+from .items.DateAxis import DateAxis
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])
 
