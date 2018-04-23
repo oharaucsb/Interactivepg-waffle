@@ -231,8 +231,8 @@ class ClickablePlotWidget(pg.PlotWidget):
         kwargs.update(kkwargs)
         args = aargs
 
-        c1 = pg.PlotDataItem(data1, *args, **kwargs)
-        c2 = pg.PlotDataItem(data2, *args, **kwargs)
+        c1 = pg.PlotDataItem(data1, **kwargs)
+        c2 = pg.PlotDataItem(data2, **kwargs)
         c1.hide()
         c2.hide()
         # c1 = self.plot(data1, *args, **kwargs)

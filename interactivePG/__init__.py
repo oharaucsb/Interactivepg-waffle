@@ -479,7 +479,10 @@ def exportImage(plotObject, **kwargs):
     I'm dumping this here so I know the rough steps and can expand on it
     as I need it
     :param args:
-    :param kwargs:
+    :param kwargs: Fed to the pyqtgraph function.
+        fileName: Filename to save
+        toBytes: To return the bytes in buffer
+        copy: To copy it to the clipboard
     :return:
     """
     from pyqtgraph.exporters import ImageExporter as E
@@ -491,6 +494,7 @@ def exportImage(plotObject, **kwargs):
         try:
             scene = plotObject.scene()
         except TypeError:
+            print("took this scene")
             scene = plotObject.scene
     else:
         print("I need a scene")
@@ -498,7 +502,7 @@ def exportImage(plotObject, **kwargs):
     e = E(scene)
 
     # e.export(copy=True)
-    e.export(**kwargs)
+    return e.export(**kwargs)
 
 def dirs(obj, st='', caseSensitive=False):
     """

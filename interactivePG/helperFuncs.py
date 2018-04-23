@@ -100,7 +100,7 @@ def getPlotPens(*args, **kwargs):
         style = kwargs.pop('style', None)
         if style is None:
             if pw is None:
-                style = '-'
+                style = config_options["linestyleChars"].index('-')
             else:
                 idx = (len(pw.plotItem.curves) // numCols) % config_options["standardLineshapes"] + 1
                 style = idx
@@ -131,7 +131,11 @@ def getPlotPens(*args, **kwargs):
 
         pen.setColor(pg.mkColor(color))
         pen.setWidth(width)
-        pen.setStyle(style)
+        try:
+            pen.setStyle(style)
+        except TypeError:
+            print("styleerror", style)
+            raise
         kwargs['pen'] = pen
     return args, kwargs
 

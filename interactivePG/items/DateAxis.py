@@ -155,3 +155,4 @@ class DateAxis(pg.AxisItem):
         return ret
 
         return super(DateAxis, self).tickSpacing(minVal, maxVal, size)
+
