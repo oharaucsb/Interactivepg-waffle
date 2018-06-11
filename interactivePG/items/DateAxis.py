@@ -16,6 +16,11 @@ class DateAxis(pg.AxisItem):
         change this code to handle that, but then how would I specify
         both top and bottom being DateAxes?
 
+        Example usage:
+        plot = pg.plot()
+
+        pg.DateAxis(plot, orientation="bottom")
+
         :param args:
         :param kwargs:
         """

@@ -84,7 +84,8 @@ def plot(*args, **kwargs):
         kwargs['name'] = kwargs['label']
     if 'name' in kwargs:
         legend()
-    plt.plot(*args, **kwargs)
+    if args or kwargs:
+        plt.plot(*args, **kwargs)
     return plt
 
 def plotxyy(*args, **kwargs):
@@ -541,3 +542,9 @@ def manipulate(manipulateArgs, *args, **kwargs):
     window.show()
 
     plotList["__LAST_FIG"] = window
+
+def text(x, y, text, **kwargs):
+    text = pg.TextItem(str(text), color=(0,0,0))
+    text.setPos(x, y)
+    gcf().addItem(text)
+    return text

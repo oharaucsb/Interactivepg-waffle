@@ -24,6 +24,8 @@ class PolarImagePlot(pg.ImageView):
             self.setImage(imageData)
 
 
+
+
 class PolarPointInfo(object):
     def __init__(self, ridx=0, tidx=0, r=0, t=0, val=0):
         self.ridx = ridx
@@ -76,14 +78,18 @@ class PolarImageItem(pg.ImageItem):
 
         self.r = r
         self.theta = theta
-        self._scaleFactor = 10
+        self._scaleFactor = 1
         self._paintingPath = None
+        self._paintingPathItems = None
 
         super(PolarImageItem, self).__init__(image, **kwargs)
 
 
         # set it so the center of the imageItem corresponds to the view
         self.translate(-self.width()/2, -self.height()/2)
+
+        # self.getViewBox().setRenderHint(QtGui.QPainter.Antialiasing)
+
 
 
         self.allowMouseClicks = True
@@ -95,19 +101,52 @@ class PolarImageItem(pg.ImageItem):
 
     def genPaintingPaths(self, radii, ang):
         self._paintingPath = []
+        self._paintingPathItems = []
         dr = np.diff(radii)[0]  # ASSUMES MONOTONICITY/EQUAL SPACING
         dang = np.diff(ang)[0]  ## ASSUMES MONOTONICITY/EQUAL SPACING
         rect = lambda rval: QtCore.QRectF(-rval, -rval, 2 * rval, 2 * rval)
         for ridx in range(len(radii)):
             innerPaths = []
+            innerItems = []
             for tidx in range(len(ang)):
                 path = QtGui.QPainterPath()
+                # path.arcTo(rect(radii[ridx] + dr / 2), ang[tidx] + dang / 2, -dang)
+                # path.lineTo(0, 0)
+                # path.arcTo(rect(radii[ridx] - dr / 2), ang[tidx] - dang / 2, dang)
+
+                # start outer radius, outter angle
+                path.arcMoveTo(rect(radii[ridx] + dr / 2), ang[tidx] + dang / 2)
+
+                # to outter radius, inner angle
                 path.arcTo(rect(radii[ridx] + dr / 2), ang[tidx] + dang / 2, -dang)
-                path.lineTo(0, 0)
+
+                # to inner radius, inner angle
+                path.arcTo(rect(radii[ridx] - dr / 2), ang[tidx] - dang / 2, 0)
+
+                # to inner radius, outer angle
                 path.arcTo(rect(radii[ridx] - dr / 2), ang[tidx] - dang / 2, dang)
 
+                #back to outer radius, outter angle
+                path.arcTo(rect(radii[ridx] + dr / 2), ang[tidx] + dang / 2, 0)
+
+                # outterArc = QtGui.QPainterPath()
+                # outterArc.arcTo(rect(radii[ridx] + dr / 2), ang[tidx] + dang / 2, -dang)
+                # innerArc = QtGui.QPainterPath()
+                # innerArc.arcTo(rect(radii[ridx] - dr / 2), ang[tidx] + dang / 2, -dang)
+                #
+                #
+                # path = outterArc.subtracted(innerArc)
+                # path.setFillRule(QtCore.Qt.WindingFill)
+
                 innerPaths.append(path)
+                item = QtWidgets.QGraphicsPathItem(path)
+                item.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+
+                innerItems.append(item)
+                self.getViewBox().addItem(item)
+
             self._paintingPath.append(innerPaths)
+            self._paintingPathItems.append(innerItems)
 
     def width(self):
         if self.qimage is None:
@@ -185,132 +224,13 @@ class PolarImageItem(pg.ImageItem):
                     # print("make color", ridx, tidx,)
                     # print("make color", ridx, tidx, argb[ridx, tidx, :])
                     color = QtGui.QColor(*argb[ridx, tidx, :].tolist())
-                    path = self._paintingPath[ridx][tidx]
-                    painter.fillPath(path, pg.mkBrush(color))
-                    # color = QtGui.QColor("red")
-                    # color.setAlphaF(0.5)
-                    # print("Color", color.name())
-                    # painter.setBrush(QtGui.QBrush(color))
-                    # painter.drawRect(rect(ridx))
-                    # print("drawing rect ", radii[ridx])
-                    # print(f"plotting r={radii[ridx]:.0f}, theta={ang[tidx]:.0f}, a={self.image[ridx, tidx]:.2f}")
-
-                    ## TODO: Keep all the painter paths,
-                    ## only update the paths themselves on a new setImage
-                    ## LUT changes wouldn't require redrawing paths.
-                    ## Could speed things up
-
-                    #
-                    #
-                    #
-                    # innerPath = QtGui.QPainterPath()
-                    # outerPath = QtGui.QPainterPath()
-                    # try:
-                    #     ## painter.drawEllipse(rect(radii[ridx]))
-                    #     ## painter.drawArc(rect(radii[ridx]), ang[tidx], dang[tidx])
-                    #     # innerPath.arcTo(rect(radii[ridx]-dr/2), ang[tidx], dang[tidx])
-                    #     # outerPath.arcTo(rect(radii[ridx]+dr/2), ang[tidx], dang[tidx])
-                    #
-                    #     innerPath.arcTo(rect(radii[ridx]-dr/2), ang[tidx]-dang / 2, dang)
-                    #     outerPath.arcTo(rect(radii[ridx]+dr/2), ang[tidx]+dang / 2, -dang)
-                    # except IndexError:
-                    #     # print("we died")
-                    #     # if you're on the last arc, cut it in half?
-                    #     # painter.drawArc(rect(radii[ridx]), ang[tidx], dang[tidx-1]/2)
-                    #     innerPath.arcTo(rect(radii[ridx]-dr/2), ang[tidx], dang[tidx-1]/2)
-                    #     outerPath.arcTo(rect(radii[ridx]+dr/2), ang[tidx], dang[tidx-1]/2)
-                    # outerPath.closeSubpath()
-                    # innerPath.closeSubpath()
-                    # painter.setPen(pg.mkPen("r", width=10))
-                    # painter.drawPath(outerPath)
-                    # painter.setPen(pg.mkPen("g", width=10))
-                    # painter.drawPath(innerPath)
-                    #
-                    # for ii in range(outerPath.elementCount()):
-                    #     e = outerPath.elementAt(ii)
-                    #     print(e.type, e.x, e.y)
-                    #
-                    #
-                    # path = outerPath.subtracted(innerPath)
-                    # print(path.isEmpty())
-                    # painter.setPen(pg.mkPen("b", width=10))
-                    # # painter.fillPath(path, pg.mkBrush('b'))
-                    # painter.drawPath(path)
-
-
-
-
-
-                    # path = QtGui.QPainterPath()
-
-                    ## painter.drawEllipse(rect(radii[ridx]))
-                    ## painter.drawArc(rect(radii[ridx]), ang[tidx], dang[tidx])
-                    # innerPath.arcTo(rect(radii[ridx]-dr/2), ang[tidx], dang[tidx])
-                    # outerPath.arcTo(rect(radii[ridx]+dr/2), ang[tidx], dang[tidx])
-
-                    # path.arcTo(rect(radii[ridx] + dr / 2), ang[tidx] + dang / 2, -dang)
-                    # painter.setPen(pg.mkPen("r", width=10))
-
-
-                    # path.lineTo(0, 0)
-                    # painter.drawPath(path)
-
-
-                    # path.arcTo(rect(radii[ridx] - dr / 2), ang[tidx] - dang / 2, dang)
-                    # print("size:", path.elementCount())
-                    # path = path.simplified()
-                    # print("\tsize:", path.elementCount())
-                    # painter.setPen(pg.mkPen("g", width=10))
-                    # painter.drawPath(path)
+                    # path = self._paintingPath[ridx][tidx]
                     # painter.fillPath(path, pg.mkBrush(color))
-                    # path.lineTo(0,0)
-
-                    # outerPath.closeSubpath()
-                    # innerPath.closeSubpath()
-                    # painter.setPen(pg.mkPen("g", width=10))
-                    # painter.drawPath(path)
-
-                    # for ii in range(path.elementCount()):
-                    #     e = path.elementAt(ii)
-                    #     print(e.type, e.x, e.y)
-
-                    # painter.setPen(pg.mkPen("b", width=10))
-                    # painter.fillPath(path, pg.mkBrush('b'))
-                    # painter.drawPath(path)
-
-
-                    # r1 = radii[ridx] - dr / 2
-                    # r2 = radii[ridx] + dr / 2
-                    # t1 = ang[tidx] - dang / 2
-                    # t2 = ang[tidx] + dang / 2
-                    #
-                    # x11, y11 = r1 * sind(t1), r1 * cosd(t1)
-                    # x12, y12 = r1 * sind(t2), r1 * cosd(t2)
-                    #
-                    # x21, y21 = r2 * sind(t1), r2 * cosd(t1)
-                    # x22, y22 = r2 * sind(t2), r2 * cosd(t2)
-                    #
-                    # # path.moveTo(x11, y11)  # inner r, lower theta
-                    # path = QtGui.QPainterPath(QtCore.QPointF(x11, y11))
-                    # path.lineTo(x21, y21)  # outter r, lower etha
-                    # path.arcTo(rect(r2), t1, t2-t1) # outer r, higher theta
-                    # # path.lineTo(x12, y12)
-                    # # path.arcTo(rect(r1), t2, t1-t2)
-                    #
-                    # path.arcMoveTo(rect(r1), t1)
-                    # painter.drawPath(path)
-                    #
-                    # painter.setPen(pg.mkPen("b", width=10))
-                    # path.arcTo(rect(r1), t1, dang)
-                    # painter.drawPath(path)
-                    #
-                    # painter.setPen(pg.mkPen("g", width=10))
-                    # path.arcMoveTo(rect(r2), t2)
-                    # painter.drawPath(path)
-
-                    # painter.setPen(QtGui.QPen(QtCore.Qt.NoPen))
-                    # break
-                # break
+                    item = self._paintingPathItems[ridx][tidx]
+                    item.setBrush(pg.mkBrush(color))
+                    # item.setPen(QtCore.Qt.NoPen)
+                    # if color.alpha()!=0:
+                    #     painter.strokePath(path, pg.mkPen("k", width=1))
 
 
         finally:
@@ -362,18 +282,21 @@ class PolarImageItem(pg.ImageItem):
                 self._previousClickObject = None
         except StopIteration:
             # print("Found idx", ridx, tidx, self.r[ridx], self.theta[tidx])
+            ev.accept()
             if self._previousClickObject is None:
                 self._previousClickObject = QtWidgets.QGraphicsPathItem()
                 self.getViewBox().addItem(self._previousClickObject)
                 self._previousClickObject.setBrush(pg.mkBrush("y", width=5))
                 self._previousClickObject.setPen(QtGui.QPen(QtCore.Qt.NoPen))
                 self._previousClickObject.setScale(1./self._scaleFactor)
-            self._previousClickObject.setPath(self._paintingPath[ridx][tidx])
+            self._previousClickObject.setPath(self._paintingPath[ridx][
+                                                  tidx].simplified())
 
             obj = PolarPointInfo(ridx, tidx, self.r[ridx], self.theta[tidx],
                                  self.image[ridx, tidx])
             self.sigPointClicked.emit(obj)
             return
+        ev.ignore()
 
         # print("Not found\n")
 

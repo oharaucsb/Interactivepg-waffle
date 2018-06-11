@@ -69,8 +69,13 @@ class AxisSettingsDialog(QtGui.QDialog):
 
         # Estimate the precision with which you need to show numbers.
         mn, mx = self.initialSettings["from"], self.initialSettings["to"]
-        prec = int(np.abs(np.log10((mx-mn)/mn))) + 2
-        fmt = "{:." + "{}".format(prec) + "g}"
+        try:
+            prec = int(np.abs(np.log10((mx-mn)/np.abs(mn)))) + 2
+            fmt = "{:." + "{}".format(prec) + "g}"
+        except Exception as e:
+            # If something goes wrong, just... don't pretty print it
+            fmt="{:g}"
+
         self.ui.tFrom.setText(fmt.format(self.initialSettings["from"]))
         self.ui.tTo.setText(fmt.format(self.initialSettings["to"]))
         self.ui.cbMode.setCurrentIndex(self.initialSettings["type"])

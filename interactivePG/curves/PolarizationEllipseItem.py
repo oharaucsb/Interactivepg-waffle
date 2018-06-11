@@ -66,3 +66,19 @@ class PolarizationEllipseItem(pg.ViewBox):
 
         self.ellipseCurve.setData(amp1, amp2)
         return amp1, amp2
+
+    def mouseDragEvent(self, ev, axis=None):
+        ev.ignore()
+
+    def addArrow(self, **kwargs):
+        defaults = {
+            "index": 24,
+            "pen": "k",
+            "brush": "k",
+            "headLen":16
+        }
+        defaults.update(kwargs)
+        arr = pg.CurveArrow(self.ellipseCurve, **defaults)
+
+
+        return arr
