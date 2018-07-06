@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\FELLab\Documents\GitHub\Interactivepg-waffle\interactivePG\fixes\AxisSettings.ui'
+# Form implementation generated from reading ui file 'C:\Users\dvalovcin\Documents\GitHub\Interactivepg-waffle\interactivePG\fixes\AxisSettings.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -114,5 +114,5 @@ class Ui_AxisSettingsDialog(object):
         self.label_4.setText(_translate("AxisSettingsDialog", "Color"))
         self.label_5.setText(_translate("AxisSettingsDialog", "Width"))
 
-from InstsAndQt.customQt import QFNumberEdit
+from ..widgets.numberEdits import QFNumberEdit
 from pyqtgraph import ColorButton, SpinBox

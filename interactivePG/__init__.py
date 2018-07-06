@@ -18,6 +18,7 @@ from .images.PolarImagePlot import PolarImageItem, PolarImagePlot
 from .widgets.DelayEditor import DelayTimeEditor
 from .widgets.LabviewSlider import LabviewSlider
 from .widgets.doubleYPlot import DoubleYPlot
+from .widgets.numberEdits import QFNumberEdit, QINumberEdit
 from .items.DateAxis import DateAxis
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])

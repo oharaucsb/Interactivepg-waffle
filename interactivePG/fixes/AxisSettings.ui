@@ -159,11 +159,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QFNumberEdit</class>
-   <extends>QLineEdit</extends>
-   <header>InstsAndQt.customQt</header>
-  </customwidget>
-  <customwidget>
    <class>SpinBox</class>
    <extends>QSpinBox</extends>
    <header>pyqtgraph</header>
@@ -172,6 +167,11 @@
    <class>ColorButton</class>
    <extends>QPushButton</extends>
    <header>pyqtgraph</header>
+  </customwidget>
+  <customwidget>
+   <class>QFNumberEdit</class>
+   <extends>QLineEdit</extends>
+   <header>..widgets.numberEdits</header>
   </customwidget>
  </customwidgets>
  <resources/>
