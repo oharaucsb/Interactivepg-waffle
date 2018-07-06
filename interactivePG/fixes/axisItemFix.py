@@ -273,10 +273,18 @@ def newDrawSpecs(self, p):
 
     if axis == 0:
         textSize = np.sum([r[0].height() for r in newTextSpecs])
-        textSize2 = np.max([r[0].width() for r in newTextSpecs])
+        try:
+            textSize2 = np.max([r[0].width() for r in newTextSpecs])
+        except ValueError:
+            # Happens when zoomed in too much and there's no items to go off of
+            pass
     else:
         textSize = np.sum([r[0].width() for r in newTextSpecs])
-        textSize2 = np.max([r[0].height() for r in newTextSpecs])
+        try:
+            textSize2 = np.max([r[0].height() for r in newTextSpecs])
+        except ValueError:
+            # Happens when zoomed in too much and there's no items to go off of
+            pass
 
     self._updateMaxTextSize(textSize2)
     return axisSpec, tickSpecs, newTextSpecs

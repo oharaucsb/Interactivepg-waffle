@@ -119,7 +119,8 @@ class ClickablePlotWidget(pg.PlotWidget):
         # adding it to the list of plotItem.curves, etc, since a lot
         # of my stuff depends heavily on plotItem.curves and I don't want
         # the fit curve to be seen with it.
-        self.plotItem.vb.addItem(self.fitSettings["fitCurve"])
+        # Also, ignore the bounds so it can be ignored when calculating the autorange
+        self.plotItem.vb.addItem(self.fitSettings["fitCurve"], ignoreBounds=True)
 
         self.plotItem.ctrl.logXCheck.toggled.connect(
             lambda: self.fitSettings["fitCurve"].setLogMode(
@@ -171,6 +172,9 @@ class ClickablePlotWidget(pg.PlotWidget):
         """
         Pass an nx3 as first arg, or kwargs data:
             Plot d[:,0]vs d[:,1]+d[:,2] :: d[:,1]-d[:,2]
+            as d[:,1] is a data value, and d[:,2] is errors
+
+
         Pass two Nx2
 
         :param args:
@@ -182,7 +186,7 @@ class ClickablePlotWidget(pg.PlotWidget):
         data2 = kwargs.pop("data2", None)
         args = list(args)
 
-        if None is data1 or None is data2 or None is data:
+        if (None is data1 or None is data2) and None is data:
             # Assume it's in the *args... Figure out how
             # many numpy arrays there are.
             numnp = [ii for ii in args if type(ii) is np.ndarray]
@@ -553,6 +557,8 @@ class ClickablePlotWidget(pg.PlotWidget):
             # when you loop through lambdas like this
             a.triggered.connect(lambda x, c=c: self.sigFitSettingsChange.emit(c))
 
+
+
         funcs = list(getFuncs.keys())
         funcs.append("Other...")
         for n in funcs:
@@ -605,7 +611,7 @@ class ClickablePlotWidget(pg.PlotWidget):
 
         if self.fitSettings["p0"] is None:
             self.fitSettings["p0"] = f.guessParameters(x, y)
-            print("return from guess:", self.fitSettings["p0"])
+            # print("return from guess:", self.fitSettings["p0"])
 
         try:
             p, _ = spcf(f.__call__, x, y, p0 = self.fitSettings["p0"])
@@ -614,7 +620,15 @@ class ClickablePlotWidget(pg.PlotWidget):
             return
         self.fitSettings["p0"] = p
 
-        xfit = np.linspace(x[0], x[-1], 250)
+        # I really wanted to put this into a UI setting, but I can't
+        # remember how things are laid out for this
+        # This one will plot the full view range
+        xfit = self.plotItem.vb.viewRange()[0]
+        xfit = np.linspace(xfit[0], xfit[1])
+        # This one will plot only within the linearregion
+        ### xfit = np.linspace(x[0], x[-1], 250)
+
+
         y = f(xfit, *self.fitSettings["p0"])
         self.fitSettings["fitCurve"].setData(xfit, y)
         st = str(f).format(*p)

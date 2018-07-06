@@ -17,6 +17,7 @@ from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContaine
 from .images.PolarImagePlot import PolarImageItem, PolarImagePlot
 from .widgets.DelayEditor import DelayTimeEditor
 from .widgets.LabviewSlider import LabviewSlider
+from .widgets.doubleYPlot import DoubleYPlot
 from .items.DateAxis import DateAxis
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])
@@ -349,6 +350,26 @@ def infiniteLine(*args, **kwargs):
     if fig is None: return
     fig.plotWidget.addItem(line)
     return line
+
+def axhline(*args, **kwargs):
+    kwargs["angle"] = 0
+    kwargs.pop("alpha", None) #Not implemented
+
+    if "y" in kwargs:
+        kwargs["pos"] = kwargs.pop("y")
+    # elif len(args)>0 and (isinstance(args[0], float) or isinstance(args[0], int)):
+    #     kwargs["pos"] = args[0]
+    return infiniteLine(*args, **kwargs)
+
+def axvline(*args, **kwargs):
+    kwargs["angle"] = 90
+    kwargs.pop("alpha", None) #Not implemented
+
+    if "y" in kwargs:
+        kwargs["pos"] = kwargs.pop("y")
+    # elif len(args)>0 and (isinstance(args[0], float) or isinstance(args[0], int)):
+    #     kwargs["pos"] = args[0]
+    return infiniteLine(*args, **kwargs)
 
 def figure(*args, **kwargs):
     global qApp, plotList
