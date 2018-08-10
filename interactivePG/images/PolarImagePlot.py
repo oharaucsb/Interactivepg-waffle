@@ -4,6 +4,31 @@ import numpy as np
 import collections
 
 
+class PathItem(pg.GraphicsObject):
+
+    """
+    I wanted to make a fancy animation for my fan diagrams. The way people suggested
+    doing it was with a QPropertyAnimation. But to do it for a graphicsitem, you have
+    to make it subclass QObject. But PyQt doesn't allow this. The best I could do was
+    mimic what pyqtgraph does.
+
+    I feel like i should have actually just used a graphicsitemanimation, but I'm not
+    goign to backtrack it now.
+    """
+    def __init__(self, *args, **kwargs):
+        pg.GraphicsObject.__init__(self)
+        self.item = QtWidgets.QGraphicsPathItem(*args, **kwargs)
+        self.item.setParentItem(self)
+
+    def __getattr__(self, item):
+        return self.item.__getattribute__(item)
+
+    def paint(self, *args):
+        pass
+
+    def boundingRect(self):
+        return QtCore.QRectF()
+
 def cosd(x):
     return np.cos(x * np.pi/180)
 
@@ -139,7 +164,8 @@ class PolarImageItem(pg.ImageItem):
                 # path.setFillRule(QtCore.Qt.WindingFill)
 
                 innerPaths.append(path)
-                item = QtWidgets.QGraphicsPathItem(path)
+                # item = QtWidgets.QGraphicsPathItem(path)
+                item = PathItem(path)
                 item.setPen(QtGui.QPen(QtCore.Qt.NoPen))
 
                 innerItems.append(item)

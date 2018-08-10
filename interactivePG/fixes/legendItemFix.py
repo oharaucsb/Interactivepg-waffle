@@ -136,6 +136,12 @@ def updateSize(self):
     self.layout.setColumnMaximumWidth(1, labelWidth)
     self.layout.setColumnMinimumWidth(1, labelWidth)
 
+def setFont(self, **kwargs):
+    for sample, label in self.items:
+        label.setText(label.text, **kwargs)
+        # sample.setScale(self.ui.sbFontSize.value() / 10.)
+        label.setGeometry(label.item.boundingRect())
+
 # Drop-in support for matplotlib legends.
 def draggable(self, bl=False):
     pass
@@ -148,6 +154,8 @@ pyqtgraph.LegendItem.setParentItem = setParentItem
 pyqtgraph.LegendItem.updateSize = updateSize
 pyqtgraph.LegendItem.setBackgroundPen = setBackgroundPen
 pyqtgraph.LegendItem.setBackgroundBrush = setBackgroundBrush
+
+pyqtgraph.LegendItem.setFont = setFont
 
 pyqtgraph.LegendItem.openSettings = openSettings
 pyqtgraph.LegendItem.draggable = draggable

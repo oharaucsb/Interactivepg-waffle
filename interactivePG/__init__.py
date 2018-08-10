@@ -509,6 +509,8 @@ def exportImage(plotObject, **kwargs):
     :return:
     """
     from pyqtgraph.exporters import ImageExporter as E
+    QtGui.QApplication.processEvents() # Make sure all rendering changes have been
+    # performed.
     if isinstance(plotObject, pg.GraphicsScene):
         scene = plotObject
     elif isinstance(plotObject, PlotContainerWindow):
