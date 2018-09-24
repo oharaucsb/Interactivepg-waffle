@@ -259,9 +259,8 @@ class ManipulateWindow(QtGui.QMainWindow):
         Pass manipulators as
 
         [
-            ("name1", [lowerBound, upperBound, <startVal>, <step>]),
-            ("name2", [lowerBound, upperBound, <startVal>, <step>]),
-            ...
+            ("name1", lowerBound, upperBound, <startVal>, <step>),
+            ("name2", lowerBound, upperBound, <startVal>, <step>),            ...
         ]
         can optionally pass the first argument as a callback function
         :param manipulations:
@@ -278,8 +277,9 @@ class ManipulateWindow(QtGui.QMainWindow):
             self.setCallable(manipulations.pop(0)) # send it off to be the callbac,
 
 
-        for idx, (lbl, bnds) in enumerate(manipulations):
+        for idx, (lbl, *bnds) in enumerate(manipulations):
             self._manipulatorLayout.addWidget(QtWidgets.QLabel(lbl), idx, 0)
+
             slider = LS(range = bnds[:2])
             if len(bnds)>2:
                 slider.setValue(bnds[2])
@@ -347,12 +347,26 @@ class ManipulateWindow(QtGui.QMainWindow):
 
         ret = self.recalculate()
 
-        if len(self._updateCurves) != len(ret)-1:
-            raise RuntimeError("Expected updates for {} curves, got {}".format(
-                len(self._updateCurves),len(ret)-1))
+        # if len(self._updateCurves) != len(ret)-1:
+        #     raise RuntimeError("Expected updates for {} curves, got {}".format(
+        #         len(self._updateCurves),len(ret)-1))
+        #
+        # for idx, curve in enumerate(self._updateCurves):
+        #     curve.setData(ret[0], ret[idx+1])
 
-        for idx, curve in enumerate(self._updateCurves):
-            curve.setData(ret[0], ret[idx+1])
+        if len(self._updateCurves) == len(ret) - 1:
+            # passed as a list where the first element is x, the rest is y
+            for idx, curve in enumerate(self._updateCurves):
+                curve.setData(ret[0], ret[idx+1])
+        elif len(self._updateCurves) == len(ret) and isinstance(ret[0], np.ndarray):
+            # passed where each is a set of x,y datasets
+            for idx, curve in enumerate(self._updateCurves):
+                curve.setData(ret[idx][:,0], ret[idx][:,1])
+        else:
+            raise RuntimeError("Expected updates for {} curves, got {}".format(
+                    len(self._updateCurves), len(ret) - 1))
+
+
 
 
 

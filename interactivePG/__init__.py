@@ -554,6 +554,17 @@ def manipulate(manipulateArgs, *args, **kwargs):
     """
     Make a Mathematica-style manipulate plot with sliders
     to change the values of a function.
+
+
+        Pass manipulatorArgs as
+
+        [
+            ("name1", lowerBound, upperBound, <startVal>, <step>),
+            ("name2", lowerBound, upperBound, <startVal>, <step>),
+            ...
+        ]
+        can optionally pass the first argument as a callback function
+
     :param manipulateArgs:
     :param args:
     :param kwargs:

@@ -257,6 +257,7 @@ class PolarImageItem(pg.ImageItem):
                     # item.setPen(QtCore.Qt.NoPen)
                     # if color.alpha()!=0:
                     #     painter.strokePath(path, pg.mkPen("k", width=1))
+                    #     item.setPen()
 
 
         finally:
