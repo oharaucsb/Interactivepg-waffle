@@ -72,7 +72,7 @@ def getPlotPens(*args, **kwargs):
     if pen is None:
         pen = pg.mkPen()
 
-        if "fmt" in kwargs:
+        if "fmt" in kwargs and kwargs["fmt"] is not None:
             kwargs.update(parsePenFormatString(kwargs.pop("fmt")))
 
 

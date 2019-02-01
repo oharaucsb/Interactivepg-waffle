@@ -134,7 +134,6 @@ class LabviewSlider(QtWidgets.QWidget):
             self.setRange((mn, mx))
 
 
-
     def updateSettings(self, **kwargs):
         self.opts.update(kwargs)
 
@@ -142,7 +141,7 @@ class LabviewSlider(QtWidgets.QWidget):
         self.setValue(self.opts["value"])
         self.setStep(self.opts["step"])
 
-    def setRange(self, bounds):
+    def setRange(self, bounds, step=None):
         self._spinbox.setRange(*bounds)
         self.opts["range"] = tuple(bounds)
 
@@ -153,6 +152,10 @@ class LabviewSlider(QtWidgets.QWidget):
         self._lMax.blockSignals(False)
         self._lMin.blockSignals(False)
         self._updateSliderRange()
+        if step is None:
+            self.setStep((bounds[1]-bounds[0])/100)
+        else:
+            self.setStep(step)
 
     def range(self):
         return self.opts["range"]
@@ -160,6 +163,7 @@ class LabviewSlider(QtWidgets.QWidget):
     def setStep(self, value):
         self._spinbox.setSingleStep(value)
         self.opts["step"] = value
+        self._updateSliderRange()
 
     def step(self):
         return self.opts["step"]

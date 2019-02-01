@@ -12,16 +12,18 @@ from .packageSettings import config_options
 from .images.imagePlot import image as ipimage
 from .curves.clickablePlotWidget import ClickablePlotWidget as PlotWidget
 from .curves.PolarizationEllipseItem import PolarizationEllipseItem
+from .curves.PlotDataErrorItem import PlotDataErrorItem
 from .plotContainerWindow import PlotContainerWindow, ManipulateWindow
 from .images.ImageViewWithPlotItemContainer import ImageViewWithPlotItemContainer as ImageView
 from .images.PolarImagePlot import PolarImageItem, PolarImagePlot
 from .widgets.DelayEditor import DelayTimeEditor
 from .widgets.LabviewSlider import LabviewSlider
 from .widgets.doubleYPlot import DoubleYPlot
+from .widgets.numberEdits import QFNumberEdit, QINumberEdit
 from .items.DateAxis import DateAxis
 pg.setConfigOption("foreground", config_options["foreground"])
 pg.setConfigOption("background", config_options["background"])
-
+QtGui.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 
 plotList = {}
 
@@ -96,6 +98,7 @@ def plotxyy(*args, **kwargs):
     where x:= data[:,0] and y[N-1]:= data[:,1:N]
 
     pass kwarg "names" (NOT "name") to give the plots names.
+    pass kwarg "fmts" (NOT "fmt") to give the plots names.
 
     :param args:
     :param kwargs:
@@ -147,8 +150,14 @@ def plotxyy(*args, **kwargs):
     else:
         legend()
 
+
+    fmts = kwargs.pop("fmts", None)
+    if fmts is None:
+        fmts = [None] * y.shape[1]
+
+
     for idx, ydata in enumerate(y.T):
-        plt.plot(x, ydata, *args, name=names[idx], **kwargs)
+        plt.plot(x, ydata, *args, name=names[idx], fmt=fmts[idx], **kwargs)
     return plt
 
 def brazilPlot(*args, **kwargs):
@@ -508,6 +517,8 @@ def exportImage(plotObject, **kwargs):
     :return:
     """
     from pyqtgraph.exporters import ImageExporter as E
+    QtGui.QApplication.processEvents() # Make sure all rendering changes have been
+    # performed.
     if isinstance(plotObject, pg.GraphicsScene):
         scene = plotObject
     elif isinstance(plotObject, PlotContainerWindow):
@@ -543,6 +554,17 @@ def manipulate(manipulateArgs, *args, **kwargs):
     """
     Make a Mathematica-style manipulate plot with sliders
     to change the values of a function.
+
+
+        Pass manipulatorArgs as
+
+        [
+            ("name1", lowerBound, upperBound, <startVal>, <step>),
+            ("name2", lowerBound, upperBound, <startVal>, <step>),
+            ...
+        ]
+        can optionally pass the first argument as a callback function
+
     :param manipulateArgs:
     :param args:
     :param kwargs:

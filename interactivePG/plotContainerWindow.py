@@ -255,52 +255,119 @@ class ManipulateWindow(QtGui.QMainWindow):
 
 
     def setManipulators(self, manipulations):
+        """
+        Pass manipulators as
+
+        [
+            ("name1", lowerBound, upperBound, <startVal>, <step>),
+            ("name2", lowerBound, upperBound, <startVal>, <step>),            ...
+        ]
+        can optionally pass the first argument as a callback function
+        :param manipulations:
+        :return:
+        """
 
         ## TODO: clear the layout? Or assume this only gets
         ## set once per instance?
         if manipulations is None: return
 
-        self._updateCurves = self._plotWindow.plotWidget.plotItem.curves.copy()
 
 
         if callable(manipulations[0]):
             self.setCallable(manipulations.pop(0)) # send it off to be the callbac,
 
 
-        for idx, (lbl, bnds) in enumerate(manipulations):
+        for idx, (lbl, *bnds) in enumerate(manipulations):
             self._manipulatorLayout.addWidget(QtWidgets.QLabel(lbl), idx, 0)
+
             slider = LS(range = bnds[:2])
-            if len(bnds)==3:
+            if len(bnds)>2:
                 slider.setValue(bnds[2])
-            slider.sigValueChanging.connect(self.recalculate)
+                if len(bnds)>3:
+                    slider.setStep(bnds[3])
+            # slider.sigValueChanging.connect(self.recalculate)
+
+            slider.sigValueChanging.connect(self.updateCurve)
             self._manipulatorLayout.addWidget(slider, idx, 1)
 
 
 
     def setCallable(self, callback):
         """
-        callback function
+        callback function should return a list of values,
+        lst[0] is the x values, lst[1:] are the y values, one for each curve to be
+        updated
+
+
+        ManipulateWindow.plot() must be called witih as many curve which get manipulated
+        before a call to setcallable. This allows plotting other functions on top of
+        the manipulate curve
         :param callback:
         :return:
         """
+
+        self._updateCurves = self._plotWindow.plotWidget.plotItem.curves.copy()
         self._callBack = callback
 
     def recalculate(self):
         if self._callBack is None: return
-        rc = self._manipulatorLayout.rowCount()
-        callVals = []
-        for idx in range(rc):
-            callVals.append(
-                self._manipulatorLayout.itemAtPosition(idx, 1).widget().value()
-            )
+        # rc = self._manipulatorLayout.rowCount()
+        # callVals = []
+        # for idx in range(rc):
+        #     callVals.append(
+        #         self._manipulatorLayout.itemAtPosition(idx, 1).widget().value()
+        #     )
+
+        callVals = [ii[1] for ii in self.getCurrentValues()]
         ret = self._callBack(*callVals)
+        return ret
+
+    def getCurrentValues(self):
+        out = []
+        rc = self._manipulatorLayout.rowCount()
+
+        for idx in range(rc):
+            out.append([
+            self._manipulatorLayout.itemAtPosition(idx, 0).widget().text(),
+            self._manipulatorLayout.itemAtPosition(idx, 1).widget().value(),
+                ])
+
+        return out
 
 
-        if len(self._updateCurves) != len(ret)-1:
-            raise RuntimeError("Error, mismatch in curves to update and callback function return")
+        # if len(self._updateCurves) != len(ret)-1:
+        #     raise RuntimeError("Expected updates for {} curves, got {}".format(
+        #         len(self._updateCurves),len(ret)-1))
+        #
+        # for idx, curve in enumerate(self._updateCurves):
+        #     curve.setData(ret[0], ret[idx+1])
 
-        for idx, curve in enumerate(self._updateCurves):
-            curve.setData(ret[0], ret[idx+1])
+    def updateCurve(self):
+        if self._callBack is None: return
+
+        ret = self.recalculate()
+
+        # if len(self._updateCurves) != len(ret)-1:
+        #     raise RuntimeError("Expected updates for {} curves, got {}".format(
+        #         len(self._updateCurves),len(ret)-1))
+        #
+        # for idx, curve in enumerate(self._updateCurves):
+        #     curve.setData(ret[0], ret[idx+1])
+
+        if len(self._updateCurves) == len(ret) - 1:
+            # passed as a list where the first element is x, the rest is y
+            for idx, curve in enumerate(self._updateCurves):
+                curve.setData(ret[0], ret[idx+1])
+        elif len(self._updateCurves) == len(ret) and isinstance(ret[0], np.ndarray):
+            # passed where each is a set of x,y datasets
+            for idx, curve in enumerate(self._updateCurves):
+                curve.setData(ret[idx][:,0], ret[idx][:,1])
+        else:
+            raise RuntimeError("Expected updates for {} curves, got {}".format(
+                    len(self._updateCurves), len(ret) - 1))
+
+
+
 
 
 

@@ -178,7 +178,11 @@ def newDrawSpecs(self, p):
     """
     if False: ## To make use of code completion stuff...
         self = pyqtgraph.AxisItem
-    axisSpec, tickSpecs, textSpecs = oldDrawSpecs(self, p)
+    try:
+        axisSpec, tickSpecs, textSpecs = oldDrawSpecs(self, p)
+    except TypeError:
+        # Happens when axis isn't being drawn, oldDrawSpecs returns None
+        return
     if not self.style["showValues"]:
         return axisSpec, tickSpecs, textSpecs
 
@@ -301,8 +305,8 @@ def __init__(self, *args, **kwargs):
 
 def mouseClickEvent(self, ev):
     if ev.double():
-        self.a = pgc.ConsoleWidget(namespace={"self":self})
-        self.a.show()
+        # self.a = pgc.ConsoleWidget(namespace={"self":self})
+        # self.a.show()
 
         AxisSettingsDialog.makeSettings(axisItem=self)
 
